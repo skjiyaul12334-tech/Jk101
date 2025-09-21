@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Transaction History</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root {
+            --main-bg: #6a0000; /* Dark Red */
+            --header-bg: #4c0000; /* Darker Red */
+            --item-bg: #a52a2a; /* Brownish Red */
+            --item-footer-bg: #fff;
+            --active-red: #e53e3e; /* Bright Red for active elements */
+            --text-white: #ffffff;
+            --text-dark: #333;
+            --text-light-red: #fecaca;
+            --text-yellow: #fdd835;
+            --border-color: rgba(255, 255, 255, 0.2);
+            --status-succeed-bg: #28a745;
+            --status-pending-bg: #007bff;
+            --status-failed-bg: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--main-bg);
+            color: var(--text-white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        .page-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            max-height: 900px;
+            background-color: var(--main-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--border-color);
+        }
+        
+        .header-container { padding: 10px; }
+        .page-header {
+            display: flex;
+            justify-content: space-around;
+            padding: 5px;
+            background-color: var(--header-bg);
+            border-radius: 25px;
+            flex-shrink: 0;
+        }
+        .header-tab {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .header-tab.active { background-color: var(--active-red); font-weight: 700; }
+        
+        .main-content { padding: 0 10px 10px 10px; overflow-y: auto; flex-grow: 1; }
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 10px 0 20px 0;
+        }
+        .filter-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .filter-pill {
+            padding: 4px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background-color: transparent;
+        }
+        .filter-pill.active { background-color: var(--active-red); border-color: var(--active-red); }
+        .time-filters { display: flex; gap: 10px; background-color: var(--header-bg); padding: 4px; border-radius: 25px; }
+        .time-filter { flex: 1; text-align: center; padding: 6px; border-radius: 20px; font-size: 14px; cursor: pointer; }
+        .time-filter.active { background-color: var(--active-red); }
+
+        .history-list { display: flex; flex-direction: column; gap: 15px; }
+        
+        .history-item {
+            background-color: var(--item-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            color: var(--text-white);
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 13px;
+            background-color: rgba(0,0,0,0.1);
+        }
+        .transaction-id {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-white);
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 8px;
+        }
+        .item-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+        }
+        .item-details { display: flex; align-items: center; gap: 10px; }
+        .method-icon { width: 40px; height: 40px; border-radius: 8px; }
+        .method-name { font-size: 16px; font-weight: 700; display: block; }
+        .datetime { font-size: 12px; color: var(--text-light-red); }
+        .item-end { text-align: right; }
+        .amount { font-size: 18px; font-weight: bold; color: var(--text-yellow); display: block; }
+        .history-item-status {
+            font-size: 12px; font-weight: bold; color: var(--text-white);
+            padding: 5px 12px; border-radius: 20px; text-align: center;
+            margin-top: 5px;
+        }
+        .status-succeed { background-color: var(--status-succeed-bg); }
+        .status-pending { background-color: var(--status-pending-bg); }
+        .status-failed { background-color: var(--status-failed-bg); }
+        
+        .item-footer {
+            background-color: var(--item-footer-bg);
+            padding: 10px 12px;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+        .no-history-msg { text-align: center; color: var(--text-light-red); padding-top: 50px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="header-container">
+            <header class="page-header" id="page-tabs">
+                <div class="header-tab" data-view="deposits">Deposits</div>
+                <div class="header-tab active" data-view="withdrawals">Withdrawals</div>
+            </header>
+        </div>
+        
+        <main class="main-content">
+            <div class="filter-section">
+                <div class="filter-pills" id="status-filters">
+                    <div class="filter-pill active" data-filter="succeed">Succeed</div>
+                    <div class="filter-pill" data-filter="pending">Pending</div>
+                    <div class="filter-pill" data-filter="failed">Failed</div>
+                </div>
+                <div class="time-filters" id="time-filters">
+                    <div class="time-filter active" data-filter="1">1 Day</div>
+                    <div class="time-filter" data-filter="7">7 Days</div>
+                    <div class="time-filter" data-filter="30">30 Days</div>
+                </div>
+            </div>
+            <div class="history-list" id="history-list">
+                <p class="no-history-msg">Loading history...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let loggedInUserKey = null;
+        let allTransactions = { deposits: [], withdrawals: [] };
+        let currentView = 'withdrawals';
+        let currentStatusFilter = 'succeed'; 
+        let currentTimeFilter = 1;
+
+        const historyListContainer = document.getElementById('history-list');
+        const statusFilterContainer = document.getElementById('status-filters');
+        const timeFilterContainer = document.getElementById('time-filters');
+        const pageTabsContainer = document.getElementById('page-tabs');
+
+        function init() {
+            checkLoginStatus();
+            setupEventListeners();
+        }
+
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                fetchHistory('addmoney', 'deposits', 'uid');
+                fetchHistory('withdraw', 'withdrawals', 'userId');
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        function fetchHistory(path, type, userKeyField) {
+            const historyRef = database.ref(path);
+            historyRef.orderByChild(userKeyField).equalTo(loggedInUserKey).on('value', (snapshot) => {
+                const data = snapshot.val();
+                allTransactions[type] = data ? Object.keys(data).map(key => ({ ...data[key], id: key })).reverse() : [];
+                if (currentView === type) applyFiltersAndRender();
+            });
+        }
+
+        function setupEventListeners() {
+            pageTabsContainer.addEventListener('click', (e) => {
+                const target = e.target.closest('.header-tab');
+                if (!target) return;
+                const view = target.dataset.view;
+                if (view && view !== currentView) {
+                    currentView = view;
+                    applyFiltersAndRender();
+                }
+            });
+
+            statusFilterContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('filter-pill')) {
+                    currentStatusFilter = e.target.dataset.filter;
+                    applyFiltersAndRender();
+                }
+            });
+
+            timeFilterContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('time-filter')) {
+                    currentTimeFilter = parseInt(e.target.dataset.filter, 10);
+                    applyFiltersAndRender();
+                }
+            });
+
+            historyListContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('copy-btn')) {
+                    const txnid = e.target.dataset.txnid;
+                    copyToClipboard(txnid, e.target);
+                }
+            });
+        }
+
+        function copyToClipboard(text, buttonElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                buttonElement.textContent = '✅';
+                setTimeout(() => { buttonElement.textContent = '📋'; }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy ID.');
+            });
+        }
+        
+        function applyFiltersAndRender() {
+            const sourceData = allTransactions[currentView];
+            let filteredList = [...sourceData];
+
+            filteredList = filteredList.filter(item => {
+                const status = (item.Status || item.status || 'pending').toLowerCase();
+                switch (currentStatusFilter) {
+                    case 'succeed': return ['succeed', 'approved', 'successful'].includes(status);
+                    case 'pending': return status === 'pending';
+                    case 'failed': return ['failed', 'rejected'].includes(status);
+                    default: return false;
+                }
+            });
+
+            const now = Date.now();
+            const timeLimit = now - (currentTimeFilter * 24 * 60 * 60 * 1000);
+            filteredList = filteredList.filter(item => item.timestamp >= timeLimit);
+
+            updateUI();
+            renderHistoryList(filteredList);
+        }
+
+        function updateUI() {
+            pageTabsContainer.querySelectorAll('.header-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === currentView));
+            statusFilterContainer.querySelectorAll('.filter-pill').forEach(pill => pill.classList.toggle('active', pill.dataset.filter === currentStatusFilter));
+            timeFilterContainer.querySelectorAll('.time-filter').forEach(filter => filter.classList.toggle('active', parseInt(filter.dataset.filter, 10) === currentTimeFilter));
+        }
+
+        function maskBankAccount(accountNumber) {
+            if (typeof accountNumber !== 'string' || accountNumber.length <= 5) return accountNumber || 'N/A';
+            return `${accountNumber.substring(0, 3)}******${accountNumber.substring(accountNumber.length - 2)}`;
+        }
+
+        function renderHistoryList(listToRender) {
+            historyListContainer.innerHTML = '';
+            if (listToRender.length === 0) {
+                historyListContainer.innerHTML = `<p class="no-history-msg">You have no transactions here.</p>`;
+                return;
+            }
+            
+            listToRender.forEach(item => {
+                const listItem = document.createElement('div');
+                listItem.className = 'history-item';
+                
+                const rawStatus = (item.Status || item.status || 'pending').toLowerCase();
+                let displayStatusText = 'Pending';
+                let statusClass = 'status-pending';
+
+                if (['succeed', 'approved', 'successful'].includes(rawStatus)) {
+                    displayStatusText = 'Succeed'; statusClass = 'status-succeed';
+                } else if (['failed', 'rejected'].includes(rawStatus)) {
+                    displayStatusText = 'Failed'; statusClass = 'status-failed';
+                }
+                
+                const dateObj = new Date(item.timestamp);
+                const dateString = dateObj.toLocaleDateString('en-GB');
+                const timeString = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                
+                const txnid = item.txnid || item.id;
+                const reason = item.reason || (displayStatusText === 'Failed' ? 'Transaction was declined.' : 'Need help with this order? Tap to contact us.');
+                
+                let methodName;
+                const methodIcon = 'https://i.ibb.co/whX1HN0H/bank.png';
+
+                if (currentView === 'deposits') {
+                    methodName = 'Bank Deposit';
+                } else {
+                    methodName = maskBankAccount(item.bank);
+                }
+
+                listItem.innerHTML = `
+                    <div class="item-header">
+                        <span class="transaction-id">${txnid}</span>
+                        <button class="copy-btn" data-txnid="${txnid}">📋</button>
+                    </div>
+                    <div class="item-body">
+                        <div class="item-details">
+                            <img src="${methodIcon}" alt="bank" class="method-icon">
+                            <div>
+                                <span class="method-name">${methodName}</span>
+                                <span class="datetime">${dateString} ${timeString}</span>
+                            </div>
+                        </div>
+                        <div class="item-end">
+                            <span class="amount">₹ ${parseFloat(item.amount || 0).toFixed(2)}</span>
+                            <div class="history-item-status ${statusClass}">${displayStatusText}</div>
+                        </div>
+                    </div>
+                    <div class="item-footer">
+                        Reason: ${reason}
+                    </div>
+                `;
+                historyListContainer.appendChild(listItem);
+            });
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

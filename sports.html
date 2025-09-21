@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ডাইস গেম - সম্পূর্ণ ভার্সন</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- General and Dice Game Styles --- */
+        :root {
+            --table-bg: #0c3b2e;
+            --wood-dark: #3e2723;
+            --wood-light: #5d4037;
+            --felt-green: #2e7d32;
+            --box-green-light: #4caf50;
+            --box-blue: #1565c0;
+            --box-red: #c62828;
+            --gold-primary: #ffc107;
+            --gold-dark: #c79100;
+            --text-light: #f5f5f5;
+            --shadow-dark: rgba(0,0,0,0.5);
+            --coin-gold-center: #fff59d;
+            --coin-gold-mid: #ffb300;
+            --coin-border: #8c6d62;
+            /* Header styles imported */
+            --dark-bg: #0f1923;
+            --panel-bg: #213743;
+            --header-green: #28a745;
+            --header-text-light: #c1d5e0;
+            --teal-glow: #00b8a9;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; overflow: hidden; font-family: 'Hind Siliguri', 'Roboto', sans-serif; background: #000; }
+        body { display: flex; justify-content: center; align-items: center; }
+
+        .game-container {
+            width: 100%; height: 100%;
+            max-width: 450px; max-height: 950px;
+            background: var(--table-bg);
+            display: flex; flex-direction: column;
+            border: 3px solid var(--wood-dark);
+        }
+        
+        /* --- New Header Styles --- */
+        .top-bar {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: var(--panel-bg);
+            z-index: 20;
+        }
+        .profile-icon { cursor: pointer; }
+        .profile-icon img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 14px; position: relative; color: var(--header-text-light); }
+        .balance .coin { margin-right: 6px; }
+        #balance-amount { color: white; }
+        .balance-add-btn { margin-left: 8px; background-color: var(--header-green); color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .top-icons { display: flex; align-items:center; gap: 15px; font-size: 20px; color: var(--header-text-light); }
+        .top-icons .icon-menu, .top-icons .icon-notification { cursor: pointer; font-size: 24px; }
+        
+        .status-bar{background-color:rgba(0,0,0,0.4);padding:4px;display:flex;gap:4px;overflow:hidden}.status-item{min-width:28px;height:28px;background:#455a64;border-radius:4px;color:white;font-weight:bold;display:flex;justify-content:center;align-items:center;animation:slide-in .5s forwards}.status-item.win{background-color:var(--box-red)}@keyframes slide-in{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        
+        .main-area { flex-grow: 1; position: relative; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .top-elements{position:absolute;top:15px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+        .side-profiles{ display: flex; flex-direction: column; gap: 8px; max-height: 120px; overflow-y: auto; padding-right: 5px; }
+        .profile-card{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.5);padding:4px;border-radius:20px;border:2px solid transparent;box-shadow:0 2px 4px var(--shadow-dark);transition:border-color .2s,box-shadow .2s; flex-shrink: 0;}
+        .profile-card.betting{animation:profile-bet-glow .6s}@keyframes profile-bet-glow{50%{border-color:var(--gold-primary);box-shadow:0 0 15px var(--gold-primary)}}
+        .profile-card img{width:35px;height:35px;border-radius:50%;border:2px solid var(--gold-primary)}
+        .profile-card .name{color:var(--text-light);font-size:.8em;font-weight:500}
+        .board-content { width: 100%; display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+        .dice-area-wrapper{background:linear-gradient(145deg, var(--wood-light), var(--wood-dark));border-radius:15px;padding:8px;margin-top:10px;flex-shrink:0;position:relative;}
+        .dice-pit{height:140px;background:var(--felt-green);position:relative;display:flex;justify-content:center;align-items:center;border-radius:10px;box-shadow:inset 0 0 20px rgba(0,0,0,0.6)}
+        .dice-dome{position:absolute;width:110px;height:140px;background:radial-gradient(circle at 50% 120%,rgba(255,255,255,0.2),transparent 70%);border:2px solid rgba(255,255,255,0.1);border-bottom:none;border-radius:55px 55px 0 0;transition:all .8s cubic-bezier(.68,-.55,.27,1.55);z-index:20;backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px);left:50%;transform:translateX(-50%)}
+        .dice-dome.open{transform:translateX(-50%) translateY(-150px);opacity:0}
+        .dice-container{display:flex;gap:20px;perspective:1500px}
+        .dice{width:40px;height:40px;position:relative;transform-style:preserve-3d;transition:transform 1.8s ease-out}
+        .dice.rolling{animation:roll 1.8s ease-out}@keyframes roll{to{transform:rotateX(1080deg) rotateY(1440deg) rotateZ(720deg)}}.dice-face{position:absolute;width:100%;height:100%;background-color:#fefefe;border-radius:5px;box-shadow:inset 0 0 5px rgba(0,0,0,0.2);display:grid;padding:5px;gap:2px}.pip{width:7px;height:7px;background-color:#333;border-radius:50%;align-self:center;justify-self:center}.face-1{grid-template-areas:". . ." ". a ." ". . ."}.face-2{grid-template-areas:"a . ." ". . ." ". . b"}.face-3{grid-template-areas:"a . ." ". b ." ". . c"}.face-4{grid-template-areas:"a . b" ". . ." "c . d"}.face-5{grid-template-areas:"a . b" ". c ." "d . e"}.face-6{grid-template-areas:"a . b" "c . d" "e . f"}.face-1 .pip:nth-child(1){grid-area:a}.face-2 .pip:nth-child(1){grid-area:a}.face-2 .pip:nth-child(2){grid-area:b}.face-3 .pip:nth-child(1){grid-area:a}.face-3 .pip:nth-child(2){grid-area:b}.face-3 .pip:nth-child(3){grid-area:c}.face-4 .pip:nth-child(1){grid-area:a}.face-4 .pip:nth-child(2){grid-area:b}.face-4 .pip:nth-child(3){grid-area:c}.face-4 .pip:nth-child(4){grid-area:d}.face-5 .pip:nth-child(1){grid-area:a}.face-5 .pip:nth-child(2){grid-area:b}.face-5 .pip:nth-child(3){grid-area:c}.face-5 .pip:nth-child(4){grid-area:d}.face-5 .pip:nth-child(5){grid-area:e}.face-6 .pip:nth-child(1){grid-area:a}.face-6 .pip:nth-child(2){grid-area:b}.face-6 .pip:nth-child(3){grid-area:c}.face-6 .pip:nth-child(4){grid-area:d}.face-6 .pip:nth-child(5){grid-area:e}.face-6 .pip:nth-child(6){grid-area:f}.face-1{transform:rotateY(0) translateZ(20px)}.face-2{transform:rotateY(90deg) translateZ(20px)}.face-3{transform:rotateY(180deg) translateZ(20px)}.face-4{transform:rotateY(-90deg) translateZ(20px)}.face-5{transform:rotateX(90deg) translateZ(20px)}.face-6{transform:rotateX(-90deg) translateZ(20px)}
+        #timer{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:50px;height:25px;background:rgba(0,0,0,0.6);color:var(--gold-primary);font-size:1.2em;font-weight:bold;display:flex;justify-content:center;align-items:center;border-radius:5px;z-index:25}
+        .betting-grid{display:flex;flex-direction:column;flex-grow:1}.major-bets{display:grid;grid-template-columns:1fr 1fr 1fr;flex-grow:2}.number-bets-container{display:flex;flex-direction:column;flex-grow:3}.number-bets-row{display:grid;grid-template-columns:repeat(5,1fr);flex-grow:1}.bet-box{color:var(--text-light);text-align:center;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,0.5);transition:all .15s ease-out;position:relative;box-shadow:inset 0 2px 2px rgba(255,255,255,0.2);overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center}.bet-box.down{background-color:var(--box-green-light)}.bet-box.seven{background-color:var(--box-blue)}.bet-box.up{background-color:var(--box-red)}.bet-box.number{background-color:var(--felt-green)}
+        .major-text{font-size:1.8em;line-height:1}.sub-text{font-size:1em;opacity:.9;text-transform:uppercase}.number-bets-row .bet-box{font-size:1.8em}
+        .bet-total-display{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);color:var(--gold-primary);padding:2px 10px;border-radius:10px;font-size:.8em;font-weight:600}
+        .bet-box.winner{animation:winner-pulse-effect 1.2s infinite ease-in-out}@keyframes winner-pulse-effect{50%{border-color:var(--gold-primary);box-shadow:0 0 30px 8px var(--gold-primary);}}
+        .chip-stack{position:absolute;inset:0;perspective:500px}
+        .stacked-chip,.flying-chip{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 50% 40%,var(--coin-gold-center),var(--coin-gold-mid));border:2px solid var(--coin-border);box-shadow:0 1px 3px var(--shadow-dark);display:flex;justify-content:center;align-items:center;color:#4e342e;font-size:9px;font-weight:700}
+        .stacked-chip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+        .flying-chip{position:fixed;z-index:100;transition:all .6s cubic-bezier(.4,0,.8,1)}
+        .game-footer{padding:8px 15px;background:rgba(0,0,0,0.4);border-top:1px solid rgba(255,255,255,0.2);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;z-index:10}.player-info{display:flex;align-items:center;gap:10px}.player-info img{width:50px;height:50px;border-radius:50%;border:2px solid var(--gold-primary)}.balance-info{color:var(--text-light)}#user-balance-value{font-size:1.3em;font-weight:bold;color:var(--gold-primary)}.bet-controls{display:flex;align-items:center;gap:10px}.bet-control-btn{background:none;border:2px solid var(--gold-primary);color:var(--gold-primary);width:40px;height:40px;border-radius:8px;font-size:1.4em;cursor:pointer}.main-bet-input-wrapper{width:80px;height:50px;background:linear-gradient(145deg, #424242, #212121);border-radius:8px;color:white;display:flex;justify-content:center;align-items:center;border:2px solid var(--gold-dark);box-shadow:0 5px 10px var(--shadow-dark)}#bet-amount-input{width:100%;height:100%;background:none;border:none;color:var(--gold-primary);font-size:1.8em;font-weight:bold;text-align:center;pointer-events:none}
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- START: কার্যকরী নতুন হেডার -->
+        <header class="top-bar">
+            <div class="profile-icon" id="profile-icon-btn">
+                <img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P">
+            </div>
+            <div class="balance">
+                <span class="coin">💰</span>
+                <span id="balance-amount">0.00</span>
+                <span class="balance-add-btn" id="balance-add-btn">+</span>
+            </div>
+            <div class="top-icons">
+                <span class="icon-notification" id="notification-icon-btn">🔔</span>
+                <span class="icon-menu" id="menu-icon-btn">☰</span>
+            </div>
+        </header>
+        <!-- END: কার্যকরী নতুন হেডার -->
+
+        <div id="status-bar" class="status-bar"></div>
+        
+        <main class="main-area">
+            <div class="top-elements"><div id="side-profiles" class="side-profiles"></div><div id="bot-main-profile" class="profile-card"></div></div>
+            <div class="board-content">
+                <div class="dice-area-wrapper"> <div id="timer" class="timer-display">10</div> <div class="dice-pit"> <div id="dice-dome" class="dice-dome"></div> <div class="dice-container"> <div id="dice1" class="dice"> <div class="dice-face face-1"><div class="pip"></div></div> <div class="dice-face face-2"><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> </div> <div id="dice2" class="dice"> <div class="dice-face face-1"><div class="pip"></div></div> <div class="dice-face face-2"><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> <div class="dice-face face-6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div> </div> </div> </div> </div>
+                <div class="betting-grid">
+                    <div class="major-bets"> <div class="bet-box down" data-bet-type="down"><div class="major-text">2-6</div><div class="sub-text">ডাউন</div><div class="chip-stack"></div><div class="bet-total-display">0</div></div> <div class="bet-box seven" data-bet-type="seven"><div class="major-text">7</div><div class="chip-stack"></div><div class="bet-total-display">0</div></div> <div class="bet-box up" data-bet-type="up"><div class="major-text">8-12</div><div class="sub-text">আপ</div><div class="chip-stack"></div><div class="bet-total-display">0</div></div> </div>
+                    <div class="number-bets-container"><div id="number-grid-1" class="number-bets-row"></div><div id="number-grid-2" class="number-bets-row"></div></div>
+                </div>
+            </div>
+        </main>
+        <footer class="game-footer"><div class="player-info"> <img id="footer-profile-img" src="https://i.pravatar.cc/50?img=1" alt="Player"> <div class="balance-info"> <span>ব্যালেন্স</span> <div id="user-balance-value">...</div> </div> </div><div class="bet-controls"> <button id="decrease-bet-btn" class="bet-control-btn"><i class="fa-solid fa-rotate-left"></i></button> <div class="main-bet-input-wrapper"><input type="text" id="bet-amount-input" readonly></div> <button id="increase-bet-btn" class="bet-control-btn">x2</button> </div></footer>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+                authDomain: "spin-199a1.firebaseapp.com",
+                databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "spin-199a1",
+            };
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+            const database = firebase.database();
+            
+            // --- DOM Elements ---
+            // Header elements
+            const balanceEl = document.getElementById('balance-amount');
+            const profileImgEl = document.getElementById('profile-main-img');
+            // Dice game elements
+            const timerDisplay=document.getElementById("timer"),diceDome=document.getElementById("dice-dome"),diceElements=[document.getElementById("dice1"),document.getElementById("dice2")],numberGrid1=document.getElementById("number-grid-1"),numberGrid2=document.getElementById("number-grid-2"),sideProfilesContainer=document.getElementById("side-profiles"),statusBar=document.getElementById("status-bar"),userBalanceValue=document.getElementById("user-balance-value"),betAmountInput=document.getElementById("bet-amount-input"),increaseBetBtn=document.getElementById("increase-bet-btn"),decreaseBetBtn=document.getElementById("decrease-bet-btn"),playerInfoEl=document.querySelector(".player-info"),botMainProfile=document.getElementById("bot-main-profile"), footerProfileImg = document.getElementById('footer-profile-img');
+
+            // --- Game State & Config ---
+            let loggedInUserKey = null;
+            let userBalanceRef = null;
+            let userBalance = 0;
+            const BET_AMOUNTS=[10,50,100,500,1e3,5e3,1e4];
+            const BET_TYPES=["down","seven","up","2","3","4","5","6","8","9","10","11","12"];
+            let isBettingAllowed=!1,betCounts={},statusHistory=[],currentBetIndex=0;
+            
+            // --- Core Functions ---
+
+            // 1. Check login status from Session Storage
+            function checkLoginStatus() {
+                loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+                if (!loggedInUserKey) {
+                    console.error("ব্যবহারকারী লগইন করেননি। রিয়েল-টাইম আপডেট কাজ করবে না।");
+                    // Optionally, redirect to login page: window.location.href = 'login.html';
+                }
+            }
+
+            // 2. Setup navigation for header icons
+            function setupNavigationListeners() {
+                document.getElementById('profile-icon-btn').addEventListener('click', () => { window.location.href = 'profile.html'; });
+                document.getElementById('balance-add-btn').addEventListener('click', () => { window.location.href = 'addmoney.html'; });
+                document.getElementById('notification-icon-btn').addEventListener('click', () => { window.location.href = 'notification.html'; });
+                document.getElementById('menu-icon-btn').addEventListener('click', () => { window.location.href = 'bet-history.html'; });
+            }
+
+            // 3. Load user data and listen for real-time updates
+            function loadAndSyncUserData(userKey) {
+                userBalanceRef = database.ref(`customers/${userKey}`);
+                
+                userBalanceRef.on('value', snapshot => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        userBalance = userData.balance || 0;
+                        const profileImage = userData.profileImage || `https://i.pravatar.cc/40?u=${userKey}`;
+                        
+                        // Update UI in all places
+                        balanceEl.textContent = userBalance.toFixed(2);
+                        userBalanceValue.textContent = userBalance.toLocaleString();
+                        profileImgEl.src = profileImage;
+                        footerProfileImg.src = profileImage.replace('40?u', '50?u'); // footer image is slightly larger
+
+                    } else {
+                         // If user has no data, create a default profile
+                        console.warn("প্রথমবার ব্যবহারের জন্য ডিফল্ট প্রোফাইল তৈরি করা হচ্ছে।");
+                        userBalance = 100000;
+                        userBalanceRef.set({
+                            balance: userBalance,
+                            profileImage: `https://i.pravatar.cc/40?u=${userKey}`
+                        });
+                    }
+                });
+            }
+
+            // --- Dice Game Specific Functions ---
+            
+            function formatAmount(e){return e>=1e3?`${e/1e3}k`:e.toString()}
+            const updateBetAmount=()=>{betAmountInput.value=formatAmount(BET_AMOUNTS[currentBetIndex])};
+            increaseBetBtn.addEventListener("click",()=>{currentBetIndex=(currentBetIndex+1)%BET_AMOUNTS.length,updateBetAmount()});
+            decreaseBetBtn.addEventListener("click",()=>{currentBetIndex=(currentBetIndex-1+BET_AMOUNTS.length)%BET_AMOUNTS.length,updateBetAmount()});
+
+            function placeRealUserBet(e) {
+                if (!isBettingAllowed) { alert("এখন বেট করার সময় নয়।"); return; }
+                if (!loggedInUserKey) { alert("অনুগ্রহ করে প্রথমে লগইন করুন।"); return; }
+
+                const betTargetElement = e.currentTarget;
+                const betAmount = BET_AMOUNTS[currentBetIndex];
+
+                if (userBalance < betAmount) { alert("আপনার পর্যাপ্ত ব্যালেন্স নেই!"); return; }
+                
+                const newBalance = userBalance - betAmount;
+                // Update balance in Firebase
+                userBalanceRef.child('balance').set(newBalance);
+                
+                animateChipFromSource(betTargetElement, playerInfoEl, true, betAmount);
+            }
+
+            function animateChipFromSource(e,t,l,n){const a=formatAmount(n);l?(t.style.animation="profile-bet-glow 0.6s",setTimeout(()=>{t.style.animation=""},600)):(t.classList.add("betting"),setTimeout(()=>{t.classList.remove("betting")},600));const d=document.createElement("div");d.className="flying-chip",d.textContent=a,document.body.appendChild(d);const s=t.getBoundingClientRect(),i=e.querySelector(".chip-stack"),o=i.getBoundingClientRect();d.style.left=`${s.left+s.width/2-12}px`,d.style.top=`${s.top+s.height/2-12}px`,requestAnimationFrame(()=>{const t=o.width/2-12,l=o.height/2-12;d.style.transform=`translate(${o.left-s.left+t}px, ${o.top-s.top+l}px)`}),setTimeout(()=>{d.remove();const t=e.dataset.betType;betCounts[t]=(betCounts[t]||0)+n,e.querySelector(".bet-total-display").textContent=betCounts[t].toLocaleString();const l=document.createElement("div");l.className="stacked-chip",l.textContent=a,l.style.transform+=` rotate(${20*Math.random()-10}deg)`,i.appendChild(l)},600)}
+            function populateProfiles(){sideProfilesContainer.innerHTML="";for(let e=1;e<=8;e++){const t=document.createElement("div");t.className="profile-card",t.id=`profile-card-${e}`,t.innerHTML=`<img src="https://i.pravatar.cc/35?img=${e+1}" alt="User ${e}"><span class="name">Player ${e}</span>`,sideProfilesContainer.appendChild(t)} botMainProfile.innerHTML=`<img src="https://i.pravatar.cc/35?img=10" alt="Main Bot"><span class="name">Boss</span>`}
+            function generateNumberGrids(){[numberGrid1,numberGrid2].forEach((e,t)=>{e.innerHTML="";const l=0===t?[2,3,4,5,6]:[8,9,10,11,12];l.forEach(t=>{const l=document.createElement("div");l.className="bet-box number",l.dataset.betType=t,l.textContent=t,l.innerHTML+='<div class="chip-stack"></div><div class="bet-total-display">0</div>',e.appendChild(l)})});document.querySelectorAll(".bet-box").forEach(e=>e.addEventListener("click",placeRealUserBet))}
+            function updateStatusBar(e){statusHistory.unshift({total:e}),statusHistory.length>20&&statusHistory.pop(),statusBar.innerHTML="",statusHistory.forEach(e=>{const t=document.createElement("div");t.className="status-item",7===e.total&&t.classList.add("win"),t.textContent=e.total,statusBar.appendChild(t)})}
+            function placeBotBet(e){const t=e?botMainProfile:document.getElementById(`profile-card-${Math.floor(8*Math.random())+1}`),l=BET_TYPES[Math.floor(Math.random()*BET_TYPES.length)],n=document.querySelector(`.bet-box[data-bet-type="${l}"]`),a=BET_AMOUNTS[Math.floor(Math.random()*4)];n&&t&&animateChipFromSource(n,t,!1,a)}
+            function setDiceFace(e,t){const l={1:"rotateX(0deg) rotateY(0deg)",2:"rotateY(-90deg)",3:"rotateY(180deg)",4:"rotateY(90deg)",5:"rotateX(90deg)",6:"rotateX(-90deg)"};e.style.transform=l[t]}
+            function startNewRound(){betCounts={},document.querySelectorAll(".bet-box").forEach(e=>{e.classList.remove("winner"),e.querySelector(".bet-total-display").textContent="0"}),document.querySelectorAll(".chip-stack").forEach(e=>e.innerHTML=""),diceDome.classList.remove("open"),isBettingAllowed=!0;let e=10;timerDisplay.textContent=e;const t=setInterval(()=>placeBotBet(!1),500),l=setInterval(()=>placeBotBet(!0),100),n=setInterval(()=>{e--,e>=0?timerDisplay.textContent=e:e<0&&(clearInterval(n),clearInterval(t),clearInterval(l),endBettingAndRoll())},1e3)}
+            function endBettingAndRoll(){isBettingAllowed=!1,setTimeout(()=>diceDome.classList.add("open"),500),setTimeout(()=>{diceElements.forEach(e=>e.classList.add("rolling")),setTimeout(()=>{const e=Math.floor(6*Math.random())+1,t=Math.floor(6*Math.random())+1;diceElements.forEach(e=>e.classList.remove("rolling")),setDiceFace(diceElements[0],e),setDiceFace(diceElements[1],t);const l=e+t;updateStatusBar(l);const n=[l.toString()];l>=2&&l<=6?n.push("down"):7===l?n.push("seven"):l>=8&&l<=12&&n.push("up"),n.forEach(e=>document.querySelector(`.bet-box[data-bet-type="${e}"]`)?.classList.add("winner"));/* Add win logic here to update balance */setTimeout(startNewRound,5e3)},1800)},1300)}
+            
+            // --- Initialization Function ---
+            function init() {
+                checkLoginStatus();
+                setupNavigationListeners();
+                
+                if (loggedInUserKey) {
+                    loadAndSyncUserData(loggedInUserKey);
+                }
+                
+                // Setup the dice game UI and start the first round
+                populateProfiles();
+                generateNumberGrids();
+                updateBetAmount();
+                startNewRound();
+            }
+
+            // Start everything!
+            init();
+        });
+    </script>
+</body>
+</html>

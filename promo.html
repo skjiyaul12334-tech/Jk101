@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gifts & Promo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        /* --- New Color Scheme based on the provided image --- */
+        :root { 
+            --dark-bg: #4c0000; /* Deep Maroon Background */
+            --panel-bg: #380000; /* Darker Maroon for panels */
+            --green: #ffc107;   /* Changed to Yellow for primary actions */
+            --red: #e74c3c;
+            --orange: #ff8c00;
+            --yellow: #ffc107;  /* Yellow is the main accent color */
+            --text-light: #f0e6e6; /* Off-white for better readability */
+            --text-white: #ffffff; 
+            --teal-glow: #ffc107; /* Focus/Glow effect changed to Yellow */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; align-items: center; padding: 5px; }
+        .page-container { width: 100%; max-width: 420px; height: 100%; max-height: 900px; background-color: var(--dark-bg); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--panel-bg); }
+        
+        .page-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; background-color: var(--panel-bg); flex-shrink: 0; }
+        .page-header .header-left { display: flex; align-items: center; }
+        .page-header .back-btn { font-size: 24px; cursor: pointer; margin-right: 15px; font-weight: bold; color: var(--text-light); text-decoration: none; }
+        .page-header .title { font-size: 18px; font-weight: 700; color: var(--text-white); }
+        .header-right .balance-display { color: var(--yellow); font-weight: 700; font-size: 14px; }
+        
+        .main-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        
+        .promo-input-container { display: flex; gap: 10px; margin-bottom: 25px; }
+        .promo-input-container input { flex-grow: 1; padding: 12px; background: var(--panel-bg); border: 1px solid #6e0000; border-radius: 8px; color: var(--text-white); font-size: 16px; text-transform: uppercase; }
+        .promo-input-container input:focus { outline: none; border-color: var(--teal-glow); }
+        .promo-input-container .submit-btn { width: auto; padding: 12px 20px; margin-top: 0; font-size: 16px; flex-shrink: 0; border: none; border-radius: 8px; background-color: var(--green); color: var(--dark-bg); font-weight: bold; cursor: pointer; }
+        .promo-input-container .submit-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+
+        .promo-gift-box { background-color: var(--panel-bg); border: 2px solid var(--teal-glow); border-radius: 12px; padding: 15px; box-shadow: 0 0 10px rgba(255, 193, 7, 0.4); }
+        .promo-gift-box h3 { text-align: center; color: var(--text-white); font-weight: 700; margin-bottom: 15px; }
+        
+        .promo-gift-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px; }
+        .promo-gift-list::-webkit-scrollbar { width: 4px; }
+        .promo-gift-list::-webkit-scrollbar-thumb { background-color: var(--teal-glow); border-radius: 4px; }
+        
+        .promo-gift-item { display: flex; justify-content: space-between; align-items: center; background-color: var(--dark-bg); padding: 8px 12px; border-radius: 8px; }
+        .promo-gift-details { display: flex; flex-direction: column; color: var(--text-light); font-size: 13px; }
+        .promo-gift-amount { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; color: var(--text-white); background-color: #6e0000; padding: 4px 10px; border-radius: 5px; margin-top: 4px; }
+        .promo-gift-amount .coin-icon { font-size: 16px; }
+        
+        .promo-claim-btn { background-color: var(--green); color: var(--dark-bg); border: none; border-radius: 20px; padding: 8px 20px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .promo-claim-btn:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.7; }
+        .promo-claim-btn.claimed { background-color: var(--teal-glow); }
+
+        .no-items-msg { text-align: center; color: var(--text-light); padding: 20px 0; }
+
+        /* --- Claim Success Dialog Styles --- */
+        #claim-success-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Initially hidden */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #claim-success-dialog.visible {
+            display: flex;
+            opacity: 1;
+        }
+        .dialog-content {
+            background-color: var(--panel-bg);
+            padding: 30px 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: var(--text-white);
+            border: 2px solid var(--teal-glow);
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        #claim-success-dialog.visible .dialog-content {
+            transform: scale(1);
+        }
+        .dialog-content h2 {
+            color: var(--teal-glow);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .dialog-content p {
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        #claimed-amount-display {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--yellow);
+            display: block;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-left">
+                <a href="profile.html" class="back-btn">←</a>
+                <span class="title">Gifts & Promo</span>
+            </div>
+            <div class="header-right">
+                <span id="balance-display" class="balance-display">₹ 0.00</span>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="promo-input-container">
+                <input type="text" id="promo-code-input" placeholder="Enter promo code">
+                <button id="promo-code-submit-btn" class="submit-btn">Submit</button>
+            </div>
+            
+            <div class="promo-gift-box">
+                <h3 id="promo-box-title">Promo offer</h3>
+                <div id="promo-gift-list" class="promo-gift-list">
+                    <p class="no-items-msg">Loading offers...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Claim Success Dialog HTML -->
+    <div id="claim-success-dialog">
+        <div class="dialog-content">
+            <h2>Congratulations!</h2>
+            <p>You got it.
+                <span id="claimed-amount-display">₹ 0.00</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Confetti library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let loggedInUserKey = null;
+        let allPromoItems = null;
+        let claimedPromocodes = {};
+
+        // UI Elements
+        const balanceDisplayEl = document.getElementById('balance-display');
+        const promoCodeInputEl = document.getElementById('promo-code-input');
+        const promoCodeSubmitBtnEl = document.getElementById('promo-code-submit-btn');
+        const promoGiftListContainerEl = document.getElementById('promo-gift-list');
+        const promoBoxTitleEl = document.getElementById('promo-box-title');
+        
+        const claimSuccessDialogEl = document.getElementById('claim-success-dialog');
+        const claimedAmountDisplayEl = document.getElementById('claimed-amount-display');
+
+        function init() {
+            checkLoginStatus();
+            promoCodeSubmitBtnEl.addEventListener('click', handleApplyPromoCode);
+        }
+
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                loadUserDataAndPromoList(loggedInUserKey);
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        function loadUserDataAndPromoList(userKey) {
+            const userRef = database.ref('customers/' + userKey);
+            
+            userRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const balance = parseFloat(userData.balance) || 0;
+                    balanceDisplayEl.textContent = `₹ ${balance.toFixed(2)}`;
+                    claimedPromocodes = userData.claimedPromocodes || {};
+                    if (allPromoItems) {
+                        renderPromoList();
+                    }
+                } else {
+                    alert('User account not found. Logging out.');
+                    handleLogout();
+                }
+            });
+
+            database.ref('promocode').on('value', (snapshot) => {
+                allPromoItems = snapshot.val();
+                if (allPromoItems && typeof allPromoItems.Status === 'string') {
+                    promoBoxTitleEl.textContent = allPromoItems.Status;
+                } else {
+                    promoBoxTitleEl.textContent = 'Promo offer';
+                }
+                renderPromoList();
+            });
+        }
+        
+        function handleLogout() {
+            if (loggedInUserKey) {
+                database.ref('customers/' + loggedInUserKey).off();
+                database.ref('promocode').off();
+            }
+            sessionStorage.removeItem('loggedInUserKey');
+            window.location.href = 'login.html';
+        }
+
+        function renderPromoList() {
+            promoGiftListContainerEl.innerHTML = '';
+            if (!allPromoItems) {
+                promoGiftListContainerEl.innerHTML = `<p class="no-items-msg">There are no offers right now.</p>`;
+                return;
+            }
+
+            const promoListItems = { ...allPromoItems };
+            if (promoListItems.Status) {
+                delete promoListItems.Status;
+            }
+
+            const unclaimedPromoItems = Object.entries(promoListItems)
+                .filter(([key, promo]) => promo && typeof promo === 'object' && !claimedPromocodes[key]);
+
+            if (unclaimedPromoItems.length === 0) {
+                promoGiftListContainerEl.innerHTML = `<p class="no-items-msg">All offers have been claimed!!</p>`;
+                return;
+            }
+
+            unclaimedPromoItems.forEach(([key, promo]) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'promo-gift-item';
+                itemEl.innerHTML = `
+                    <div class="promo-gift-details">
+                        <span>${promo.Status || 'Promo Offer'}</span>
+                        <div class="promo-gift-amount">
+                            <span class="coin-icon">💰</span> ${promo.amount}
+                        </div>
+                    </div>
+                    <button class="promo-claim-btn" data-promo-id="${key}" data-amount="${promo.amount}">Claim</button>
+                `;
+                
+                const claimButton = itemEl.querySelector('.promo-claim-btn');
+                claimButton.addEventListener('click', () => handleClaimPromo(key, promo.amount, claimButton));
+                
+                promoGiftListContainerEl.appendChild(itemEl);
+            });
+        }
+
+        function showClaimSuccessAnimation(amount) {
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.9 },
+                zIndex: 9999
+            });
+
+            claimedAmountDisplayEl.textContent = `₹ ${parseFloat(amount).toFixed(2)}`;
+            claimSuccessDialogEl.classList.add('visible');
+
+            setTimeout(() => {
+                claimSuccessDialogEl.classList.remove('visible');
+            }, 2000);
+        }
+
+        async function handleClaimPromo(promoId, amount, buttonElement) {
+            if (!loggedInUserKey) return;
+            buttonElement.disabled = true;
+            buttonElement.textContent = '...';
+
+            try {
+                const updates = {};
+                updates[`customers/${loggedInUserKey}/balance`] = firebase.database.ServerValue.increment(parseFloat(amount));
+                updates[`customers/${loggedInUserKey}/claimedPromocodes/${promoId}`] = true;
+
+                await database.ref().update(updates);
+                
+                buttonElement.textContent = 'Claimed!';
+                buttonElement.classList.add('claimed');
+
+                showClaimSuccessAnimation(amount);
+                
+            } catch (error) {
+                console.error("Failed to claim promo:", error);
+                alert("Failed to claim offer. Please try again.");
+                buttonElement.disabled = false;
+                buttonElement.textContent = 'Claim';
+            }
+        }
+        
+        async function handleApplyPromoCode() {
+            const code = promoCodeInputEl.value.trim().toUpperCase();
+            if (!code) {
+                alert("Please enter a promo code.");
+                return;
+            }
+
+            promoCodeSubmitBtnEl.disabled = true;
+            promoCodeSubmitBtnEl.textContent = '...';
+
+            try {
+                const snapshot = await database.ref('offer').orderByChild('Code').equalTo(code).once('value');
+                
+                if (!snapshot.exists()) {
+                    throw new Error("Invalid or expired promo code.");
+                }
+
+                const offerId = Object.keys(snapshot.val())[0];
+                const offerData = snapshot.val()[offerId];
+                
+                const usedByRef = database.ref(`offer/${offerId}/usedBy/${loggedInUserKey}`);
+                const usedSnapshot = await usedByRef.once('value');
+                if (usedSnapshot.exists()) {
+                    throw new Error("You have already used this promo code.");
+                }
+
+                const amountToAdd = parseFloat(offerData.amou);
+                if (isNaN(amountToAdd) || amountToAdd <= 0) {
+                    throw new Error("Invalid offer amount. Please contact support.");
+                }
+
+                const updates = {};
+                updates[`offer/${offerId}/usedBy/${loggedInUserKey}`] = true;
+                updates[`customers/${loggedInUserKey}/balance`] = firebase.database.ServerValue.increment(amountToAdd);
+                
+                await database.ref().update(updates);
+                
+                alert(`Success! ₹${amountToAdd.toFixed(2)} has been added to your balance.`);
+                promoCodeInputEl.value = '';
+
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                promoCodeSubmitBtnEl.disabled = false;
+                promoCodeSubmitBtnEl.textContent = 'Submit';
+            }
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

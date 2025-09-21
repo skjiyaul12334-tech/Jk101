@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lottery Result</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+
+        :root { 
+            --bg-dark-red: #4c0000;
+            --panel-red: #800000;
+            --active-red: #e53e3e;
+            --inactive-tab-border: #a52a2a;
+            --text-light: #f5c5c5;
+            --text-white: #ffffff; 
+            --prize-bg-yellow: #f1c40f;
+            --prize-bg-purple: #6a0000;
+            --text-dark: #333333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--bg-dark-red);
+            color: var(--text-light); 
+            display: flex; 
+            justify-content: center;
+        }
+        
+        .page-container {
+            width: 100%; max-width: 420px; height: 100%;
+            background: var(--bg-dark-red);
+            overflow: hidden; display: flex; flex-direction: column;
+            padding: 15px;
+        }
+        
+        .result-tabs {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--panel-red);
+            padding: 8px;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        .result-tabs .tab-btn {
+            background: none;
+            border: 2px solid transparent;
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            flex-grow: 1;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .result-tabs .tab-btn:not(.active) {
+            border-color: var(--inactive-tab-border);
+        }
+        .result-tabs .tab-btn.active {
+            background-color: var(--active-red);
+            color: var(--text-white);
+        }
+
+        .main-content { 
+            flex-grow: 1; 
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-display {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .result-display.active {
+            display: block;
+        }
+        .result-display::-webkit-scrollbar { width: 5px; }
+        .result-display::-webkit-scrollbar-thumb { background: var(--active-red); border-radius: 5px; }
+
+        .result-card {
+            background-color: var(--panel-red);
+            border-radius: 10px;
+            overflow: hidden;
+            color: var(--text-dark);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--prize-bg-purple);
+            color: var(--text-white);
+            padding: 10px 15px;
+            font-weight: 700;
+        }
+        
+        .prize-row {
+            padding: 15px;
+            background-color: var(--text-white);
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .prize-row .row-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .prize-row .row-content {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .prize-tier {
+            color: var(--text-dark);
+            background-color: var(--text-white);
+        }
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--prize-bg-yellow);
+            padding: 8px 15px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .tier-numbers {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px 10px;
+            padding: 15px;
+            justify-items: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .no-results-msg { text-align: center; padding: 50px 15px; color: var(--text-light); font-size: 16px; }
+
+        #coming-soon-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #4c0000, #800000);
+            z-index: 100;
+            display: none;
+            justify-content: center; align-items: center; text-align: center;
+            padding: 20px;
+        }
+        .coming-soon-content h1 {
+            font-size: 2.5rem; color: var(--prize-bg-yellow); margin-bottom: 15px; font-weight: 900;
+        }
+        .coming-soon-content p { font-size: 1rem; color: var(--text-light); margin-bottom: 30px; }
+        .home-btn {
+            background-color: var(--active-red); color: var(--text-white); padding: 12px 25px;
+            border-radius: 8px; text-decoration: none; font-weight: 700;
+            transition: background-color 0.2s;
+        }
+        .home-btn:hover { background-color: #c53030; }
+    </style>
+</head>
+<body>
+
+    <div class="page-container" id="page-container">
+        <div class="result-tabs" id="result-tabs">
+            <button class="tab-btn active" data-target="morning-results">morning</button>
+            <button class="tab-btn" data-target="evening-results">evening</button>
+            <button class="tab-btn" data-target="night-results">night</button>
+        </div>
+        
+        <main class="main-content">
+            <div id="morning-results" class="result-display active">
+                <p class="no-results-msg">Loading Morning Results...</p>
+            </div>
+            <div id="evening-results" class="result-display">
+                <p class="no-results-msg">Loading Evening Results...</p>
+            </div>
+            <div id="night-results" class="result-display">
+                <p class="no-results-msg">Loading Night Results...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="coming-soon-overlay">
+        <div class="coming-soon-content">
+            <h1>Coming Soon</h1>
+            <p>Results are not available at the moment. Please check back later.</p>
+            <a href="home.html" class="home-btn">Go to Home</a>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        const pageContainer = document.getElementById('page-container');
+        const comingSoonOverlay = document.getElementById('coming-soon-overlay');
+        const resultTabsContainer = document.getElementById('result-tabs');
+
+        function renderResultCard(data, containerId, sessionName) {
+            const container = document.getElementById(containerId);
+            if (!data) {
+                container.innerHTML = `<p class="no-results-msg">No results available for ${sessionName}.</p>`;
+                return;
+            }
+
+            const secondPrizeHtml = data.secondPrize ? data.secondPrize.map(num => `<span>${num}</span>`).join('') : '';
+            const thirdPrizeHtml = data.thirdPrize ? data.thirdPrize.map(num => `<span>${num}</span>`).join('') : '';
+
+            container.innerHTML = `
+                <div class="result-card">
+                    <div class="result-header">
+                        <span>${sessionName}</span>
+                        <span>First Prize</span>
+                        <span>${data.date || 'N/A'}</span>
+                    </div>
+                    <div class="prize-row first-prize">
+                        <div class="row-header">
+                            <span>Ticket no</span>
+                            <span>Rs 10,000/</span>
+                        </div>
+                        <div class="row-content">
+                            <span>${data.firstPrize || 'N/A'}</span>
+                            <span>Rs 10,000/</span>
+                        </div>
+                    </div>
+                    ${data.secondPrize ? `
+                    <div class="prize-tier">
+                        <div class="tier-header">
+                            <span>2nd Prize</span>
+                            <span>Rs 5000/</span>
+                        </div>
+                        <div class="tier-numbers">${secondPrizeHtml}</div>
+                    </div>` : ''}
+                    ${data.thirdPrize ? `
+                    <div class="prize-tier">
+                        <div class="tier-header">
+                            <span>3rd Prize</span>
+                            <span>Rs 1000/</span>
+                        </div>
+                        <div class="tier-numbers">${thirdPrizeHtml}</div>
+                    </div>` : ''}
+                </div>
+            `;
+        }
+
+        function fetchAndDisplayResults() {
+            const resultsRef = database.ref('result');
+            resultsRef.on('value', (snapshot) => {
+                const allResults = snapshot.val();
+                if (allResults) {
+                    renderResultCard(allResults.Morning, 'morning-results', 'Morning');
+                    renderResultCard(allResults.Evening, 'evening-results', 'Evening');
+                    renderResultCard(allResults.Night, 'night-results', 'Night');
+                } else {
+                    renderResultCard(null, 'morning-results', 'Morning');
+                    renderResultCard(null, 'evening-results', 'Evening');
+                    renderResultCard(null, 'night-results', 'Night');
+                }
+            });
+        }
+        
+        resultTabsContainer.addEventListener('click', (e) => {
+             if (e.target.classList.contains('tab-btn')) {
+                resultTabsContainer.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+
+                document.querySelector('.result-display.active').classList.remove('active');
+                const targetId = e.target.dataset.target;
+                document.getElementById(targetId).classList.add('active');
+             }
+        });
+
+        function initializePage() {
+            const statusRef = database.ref('Resultss/Status');
+            statusRef.on('value', (snapshot) => {
+                const status = snapshot.val();
+                
+                if (status === 'on') {
+                    pageContainer.style.display = 'flex';
+                    comingSoonOverlay.style.display = 'none';
+                    fetchAndDisplayResults();
+                } else {
+                    pageContainer.style.display = 'none';
+                    comingSoonOverlay.style.display = 'flex';
+                }
+            });
+        }
+        
+        window.onload = initializePage;
+    </script>
+</body>
+</html>

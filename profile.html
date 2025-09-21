@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+  <title>My Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    /* --- New Color Scheme based on the provided image --- */
+    :root {
+      --bg1: #3d0000; /* Deep Maroon Top */
+      --bg2: #6e0000; /* Lighter Maroon Bottom */
+      --gold: #ffd24d; /* Primary Accent - Yellow/Gold */
+      --box-bg: rgba(0, 0, 0, 0.2); /* Semi-transparent black for depth */
+      --text-white: #ffffff;
+      --text-light: #f0e6e6; /* Off-white for readability */
+      --danger: #ff4757; /* Bright Red for Logout */
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--text-light);
+      margin: 0;
+      padding: 0;
+    }
+
+    .profile-card {
+      width: 100%;
+      height: 100vh;
+      background: transparent; /* Background is on body now */
+      overflow-y: auto;
+    }
+
+    .header {
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.4);
+      text-align: center;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--gold);
+    }
+
+    .profile-info {
+      text-align: center;
+      padding: 20px;
+    }
+    .avatar-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 10px;
+    }
+    .avatar-wrapper img {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .camera-icon {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 32px;
+      height: 32px;
+      background-color: var(--gold);
+      color: #333;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid var(--bg2);
+    }
+    .profile-info .name { font-size: 18px; font-weight: 700; margin-top: 8px; color: var(--text-white); }
+    
+    .actions-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .uid-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--box-bg);
+      border: 1px solid rgba(255,210,77,0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .uid-box .uid { font-size: 13px; opacity: 0.9; }
+    .copy-icon { cursor: pointer; opacity: 0.7; }
+
+    .logout-btn-box {
+        background: var(--danger);
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-white);
+    }
+
+    .balance-vip {
+      display: flex;
+      gap: 10px;
+      padding: 0 14px 14px;
+    }
+    .balance-vip .box {
+      flex: 1;
+      background: var(--box-bg);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid rgba(255,210,77,0.1);
+    }
+    .balance-vip .box h2 { font-size: 18px; color: var(--gold); margin: 6px 0; }
+
+    .vip-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px;
+    }
+    .vip-scroll::-webkit-scrollbar { display: none; }
+    .vip-box {
+      min-width: 90px;
+      background: var(--box-bg);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      border: 1px solid rgba(255,210,77,0.1);
+    }
+    .vip-box h4 { margin: 4px 0; color: var(--gold); font-size: 15px; }
+    .vip-box p { margin: 0; font-size: 12px; }
+
+    .banner {
+      width: calc(100% - 24px);
+      margin: 12px auto;
+    }
+    .banner img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+
+    .menu-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px;
+    }
+    .menu-scroll::-webkit-scrollbar { display: none; }
+    .menu-box {
+      min-width: 100px;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      color: var(--text-white);
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .menu-box i { font-size: 20px; }
+
+    /* Thematic Gradients for Menu */
+    .wallet { background: linear-gradient(135deg,#8B0000,#B22222); }
+    .promo { background: linear-gradient(135deg,#B22222,#DC143C); }
+    .offer { background: linear-gradient(135deg,#DC143C,#FF4500); }
+    .refer { background: linear-gradient(135deg,#FF8C00,#FFD700); color:#333; }
+    .contact { background: linear-gradient(135deg,#800000,#A52A2A); }
+
+    .dialog-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        display: none; justify-content: center; align-items: center;
+        z-index: 1000; animation: fadeIn 0.3s ease;
+    }
+    .dialog-content {
+        background: linear-gradient(180deg, var(--bg1), var(--bg2));
+        padding: 25px; border-radius: 12px;
+        border: 1px solid var(--gold); text-align: center;
+        width: 90%; max-width: 350px;
+        animation: scaleUp 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #vip-info-title { color: var(--gold); margin: 0 0 10px; }
+    #vip-info-text { margin: 0 0 20px; line-height: 1.6; }
+    #vip-info-close-btn { background: var(--gold); color: #333; border: none; padding: 8px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="profile-card">
+    <div class="header">My Profile</div>
+
+    <div class="profile-info">
+      <div class="avatar-wrapper">
+        <img id="profile-img" src="https://i.pravatar.cc/150?u=guest" alt="Profile">
+        <label for="avatar-upload" class="camera-icon">
+          <i class="fas fa-camera"></i>
+        </label>
+        <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
+      </div>
+      <div id="profile-name" class="name">Guest</div>
+      <div class="actions-container">
+        <div class="uid-box">
+          <span id="profile-uid" class="uid">UID: Not logged in</span>
+          <i class="fas fa-copy copy-icon" id="copy-uid-btn"></i>
+        </div>
+        <div class="logout-btn-box" onclick="handleLogout()">Logout</div>
+      </div>
+    </div>
+
+    <div class="balance-vip">
+      <div class="box">
+        <p>Current Balance</p>
+        <h2 id="profile-balance">₹ 0.00</h2>
+      </div>
+      <div class="box" onclick="goPage('vip.html')">
+        <p>VIP Level</p>
+        <h2 id="vip-level">Level -</h2>
+      </div>
+    </div>
+
+    <div class="vip-scroll" id="vip-scroll"></div>
+
+    <div class="banner">
+      <img src="https://via.placeholder.com/420x120.png?text=VIP+Exclusive+Banner" alt="Banner">
+    </div>
+
+    <div class="menu-scroll">
+      <div class="menu-box wallet" onclick="goPage('withdraw.html')"><i class="fas fa-wallet"></i><span>Wallet</span></div>
+      <div class="menu-box promo" onclick="goPage('promo.html')"><i class="fas fa-ticket-alt"></i><span>Promo</span></div>
+      <div class="menu-box offer" onclick="goPage('offers.html')"><i class="fas fa-gift"></i><span>Offers</span></div>
+      <div class="menu-box refer" onclick="goPage('refer.html')"><i class="fas fa-users"></i><span>Refer</span></div>
+      <div class="menu-box contact" onclick="goPage('contact.html')"><i class="fas fa-headset"></i><span>Contact</span></div>
+    </div>
+  </div>
+
+  <div class="dialog-overlay" id="vip-info-dialog">
+      <div class="dialog-content">
+          <h3 id="vip-info-title"></h3>
+          <p id="vip-info-text"></p>
+          <button id="vip-info-close-btn">OK</button>
+      </div>
+  </div>
+
+  <div id="toast-message" class="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+      authDomain: "spin-199a1.firebaseapp.com",
+      databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "spin-199a1",
+      storageBucket: "spin-199a1.appspot.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    let loggedInUserKey = sessionStorage.getItem("loggedInUserKey");
+    let vipPlansData = [];
+    const vipInfoDialog = document.getElementById('vip-info-dialog');
+
+    const vipLevelInfo = {
+        1: "You can withdraw Rs 1000/  per day, 1 time.",
+        2: "You can withdraw Rs 2000/  per day, 2 times.",
+        3: "You can withdraw Rs 2000/  per day, 3 times.",
+        4: "You can withdraw Rs 3000/  per day, 3 times.",
+        5: "You can withdraw Rs 5000/  per day, 3 times.",
+        6: "You can withdraw Rs 5000/  per day, 4 times.",
+        7: "You can withdraw Rs 10000/ per day, 5 times."
+    };
+
+    function init() {
+      if (loggedInUserKey) {
+        loadVIPPlansAndThenUser(loggedInUserKey);
+        setupEventListeners();
+      } else {
+        window.location.href = "login.html";
+      }
+    }
+
+    function setupEventListeners() {
+        document.getElementById('copy-uid-btn').addEventListener('click', copyUID);
+        document.getElementById('avatar-upload').addEventListener('change', handleAvatarUpload);
+        document.getElementById('vip-info-close-btn').addEventListener('click', () => vipInfoDialog.style.display = 'none');
+        vipInfoDialog.addEventListener('click', (e) => {
+            if (e.target === vipInfoDialog) {
+                vipInfoDialog.style.display = 'none';
+            }
+        });
+    }
+
+    async function loadVIPPlansAndThenUser(userKey) {
+        try {
+            const plansSnap = await db.ref("VIPPlans").once("value");
+            if (plansSnap.exists()) {
+                vipPlansData = Object.values(plansSnap.val()).sort((a, b) => a.level - b.level);
+                renderVipScroll();
+            }
+            loadUser(userKey);
+        } catch (error) {
+            console.error("Error loading VIP plans:", error);
+            loadUser(userKey);
+        }
+    }
+
+    function loadUser(userKey) {
+      const ref = db.ref("customers/" + userKey);
+      ref.on("value", (snap) => {
+        if (snap.exists()) {
+          const data = snap.val();
+          const balance = parseFloat(data.balance) || 0;
+          document.getElementById("profile-name").textContent = data.Naam || "Guest";
+          document.getElementById("profile-uid").textContent = "UID: " + userKey.slice(-6);
+          document.getElementById("profile-balance").textContent = `₹ ${balance.toFixed(2)}`;
+          document.getElementById("profile-img").src = data.profileImageUrl || `https://i.pravatar.cc/150?u=${userKey}`;
+          
+          const vipLevelRef = db.ref(`customers/${userKey}/VIP/level`);
+          vipLevelRef.on("value", (vipSnap) => {
+              const level = vipSnap.val() || "-";
+              document.getElementById("vip-level").textContent = "Level " + level;
+          });
+
+        } else {
+          handleLogout();
+        }
+      });
+    }
+
+    function renderVipScroll() {
+      const vipScroll = document.getElementById("vip-scroll");
+      vipScroll.innerHTML = "";
+      vipPlansData.forEach((plan) => {
+          const div = document.createElement("div");
+          div.className = "vip-box";
+          div.innerHTML = `<h4>VIP ${plan.level}</h4><p>₹${plan.depositAmount}</p>`;
+          div.dataset.level = plan.level;
+          div.addEventListener('click', showVipInfo);
+          vipScroll.appendChild(div);
+      });
+    }
+
+    function showVipInfo(event) {
+        const level = event.currentTarget.dataset.level;
+        const infoText = vipLevelInfo[level] || "No information available for this level.";
+        document.getElementById('vip-info-title').textContent = `VIP ${level} Details`;
+        document.getElementById('vip-info-text').textContent = infoText;
+        vipInfoDialog.style.display = 'flex';
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast-message');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    function copyUID() {
+        const uidText = document.getElementById("profile-uid").textContent.replace('UID: ', '');
+        navigator.clipboard.writeText(uidText).then(() => {
+            showToast('UID Copied!');
+        }).catch(err => console.error('Failed to copy:', err));
+    }
+
+    function handleAvatarUpload(event) {
+        const file = event.target.files[0];
+        if (!file || !loggedInUserKey) return;
+
+        const storageRef = storage.ref(`profile_pictures/${loggedInUserKey}`);
+        const uploadTask = storageRef.put(file);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {}, 
+            (error) => { alert('Upload failed: ' + error.message); }, 
+            () => {
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    db.ref(`customers/${loggedInUserKey}/profileImageUrl`).set(downloadURL);
+                    showToast('Profile picture updated!');
+                });
+            }
+        );
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem("loggedInUserKey");
+      window.location.href = "login.html";
+    }
+
+    function goPage(url) {
+      window.location.href = url;
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

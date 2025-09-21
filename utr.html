@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>How to Add Money</title>
+    <style>
+        /* --- Google Font: Manrope --- */
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
+
+        /* --- Global Variables & Resets --- */
+        :root {
+            --bg-dark: #121829;
+            --panel-bg: #1e253c;
+            --accent-primary: #7c4dff;
+            --text-primary: #ffffff;
+            --text-secondary: #a9b3d1;
+            --border-color: #313957;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            max-height: 900px;
+            background-color: var(--bg-dark);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            flex-shrink: 0;
+        }
+        .back-button {
+            background: none; border: none; cursor: pointer; padding: 5px;
+        }
+        .back-button svg {
+            width: 24px; height: 24px; fill: var(--text-secondary); transition: fill 0.2s ease;
+        }
+        .back-button:hover svg { fill: var(--text-primary); }
+        .content-area {
+            padding: 0 20px 20px 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .content-area::-webkit-scrollbar { display: none; }
+        .page-title {
+            font-size: 28px; font-weight: 800; margin-bottom: 30px; padding-left: 5px;
+        }
+        .steps-list { display: flex; flex-direction: column; gap: 16px; }
+        .step-card {
+            display: flex; align-items: center; gap: 16px;
+            background-color: var(--panel-bg); padding: 16px;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .step-indicator {
+            flex-shrink: 0; width: 40px; height: 40px;
+            background-color: var(--accent-primary); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 18px; font-weight: 800; color: var(--text-primary);
+        }
+        .step-details {
+            flex-grow: 1; display: flex; justify-content: space-between;
+            align-items: center; gap: 10px;
+        }
+        #utr-step-trigger { cursor: pointer; }
+        .step-text {
+            font-size: 15px; font-weight: 600; color: var(--text-secondary); line-height: 1.5;
+        }
+        .step-icon {
+            flex-shrink: 0; width: 22px; height: 22px; fill: var(--text-secondary);
+        }
+        
+        #fullscreen-dialog {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(18, 24, 41, 0.9); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            overflow: hidden; touch-action: none;
+        }
+        #fullscreen-dialog.visible { opacity: 1; visibility: visible; }
+        #dialog-banner-image {
+            max-width: 95%; max-height: 95%;
+            object-fit: contain; border-radius: 8px;
+            transition: transform 0.1s linear; cursor: grab;
+            will-change: transform;
+        }
+        #dialog-banner-image:active { cursor: grabbing; }
+        #close-dialog-btn {
+            position: absolute; top: 20px; right: 20px;
+            background-color: rgba(0, 0, 0, 0.5); color: white;
+            border: none; width: 40px; height: 40px;
+            border-radius: 50%; font-size: 28px; line-height: 40px;
+            text-align: center; cursor: pointer; z-index: 1001;
+            transition: background-color 0.2s ease;
+        }
+        #close-dialog-btn:hover { background-color: rgba(0, 0, 0, 0.8); }
+        
+        /* --- NEW: Video Container Styles --- */
+        .video-container {
+            display: none; /* Hidden by default, shown by JS */
+            width: 100%;
+            aspect-ratio: 16 / 9; /* Modern way for responsive video */
+            margin-top: 25px;
+            border-radius: 12px;
+            overflow: hidden; /* Ensures iframe corners are rounded */
+            border: 1px solid var(--border-color);
+        }
+        #video-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <a href="javascript:history.back()" class="back-button" aria-label="Go back">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></svg>
+            </a>
+        </header>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <h1 class="page-title">How to make add money</h1>
+            <div class="steps-list">
+                 <div class="step-card"><div class="step-indicator">1</div><div class="step-details"><span class="step-text">First take a screenshot from your mobile.</span></div></div>
+                 <div class="step-card"><div class="step-indicator">2</div><div class="step-details"><span class="step-text">Open the UPI app on your mobile phone.</span></div></div>
+                 <div class="step-card"><div class="step-indicator">3</div><div class="step-details"><span class="step-text">Select the screenshot image from your gallery.</span></div></div>
+                 <div class="step-card"><div class="step-indicator">4</div><div class="step-details"><span class="step-text">Go to Payment Successful History.</span></div></div>
+                 <div class="step-card"><div class="step-indicator">5</div><div class="step-details"><span class="step-text">And screenshot the transaction.</span></div></div>
+                 <div class="step-card"><div class="step-indicator">6</div><div class="step-details" id="utr-step-trigger"><span class="step-text">Copy your transaction UTR</span><svg class="step-icon" viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg></div></div>
+                 <div class="step-card"><div class="step-indicator">7</div><div class="step-details"><span class="step-text">And upload the screenshot UTR</span></div></div>
+                 
+                 <!-- NEW: Embedded Video Player -->
+                <div class="video-container" id="video-container">
+                    <iframe id="video-iframe"
+                        frameborder="0" 
+                        allow="autoplay; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+        </main>
+
+        <!-- Fullscreen Dialog HTML -->
+        <div id="fullscreen-dialog">
+            <button id="close-dialog-btn" aria-label="Close dialog">&times;</button>
+            <img id="dialog-banner-image" src="" alt="UTR Example Banner">
+        </div>
+    </div>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // --- UI Elements ---
+        const utrStepTrigger = document.getElementById('utr-step-trigger');
+        const fullscreenDialog = document.getElementById('fullscreen-dialog');
+        const closeDialogBtn = document.getElementById('close-dialog-btn');
+        const image = document.getElementById('dialog-banner-image');
+        // NEW: Video UI Elements
+        const videoContainer = document.getElementById('video-container');
+        const videoIframe = document.getElementById('video-iframe');
+
+
+        // --- UTR Banner Image from Firebase ---
+        database.ref('Utr/Uimag').on('value', (snapshot) => {
+            const imageUrl = snapshot.val();
+            if (imageUrl) {
+                image.src = imageUrl;
+                image.style.display = 'block';
+            } else {
+                image.style.display = 'none';
+            }
+        });
+        
+        // --- NEW: Video URL from Firebase ---
+        database.ref('Video/Weburl').on('value', (snapshot) => {
+            const videoUrl = snapshot.val();
+            if (videoUrl && typeof videoUrl === 'string') {
+                // Add parameters for autoplay, mute, and loop for most video hosts (e.g., YouTube)
+                // The 'mute' parameter is crucial for autoplay to work in modern browsers.
+                const connector = videoUrl.includes('?') ? '&' : '?';
+                const finalUrl = `${videoUrl}${connector}autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(videoUrl)}`;
+                
+                videoIframe.src = finalUrl;
+                videoContainer.style.display = 'block';
+            } else {
+                videoContainer.style.display = 'none';
+            }
+        });
+        
+        // Helper function to extract YouTube video ID for the playlist parameter
+        function getYouTubeVideoId(url) {
+            try {
+                const urlObj = new URL(url);
+                if (urlObj.hostname.includes('youtube.com')) {
+                    return urlObj.searchParams.get('v');
+                } else if (urlObj.hostname.includes('youtu.be')) {
+                    return urlObj.pathname.slice(1);
+                }
+            } catch (e) { /* Fails gracefully if not a valid URL */ }
+            return '';
+        }
+
+        // --- Dialog Open/Close Logic (No Changes) ---
+        utrStepTrigger.addEventListener('click', () => fullscreenDialog.classList.add('visible'));
+        closeDialogBtn.addEventListener('click', () => {
+            fullscreenDialog.classList.remove('visible');
+            resetImageTransform();
+        });
+
+        // --- Zoom and Pan Logic (No Changes) ---
+        let scale = 1, panning = false, pointX = 0, pointY = 0, start = { x: 0, y: 0 };
+        function resetImageTransform() { scale = 1; pointX = 0; pointY = 0; setTransform(); }
+        function setTransform() { image.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`; }
+        fullscreenDialog.onwheel = function(e){ e.preventDefault(); const rect = image.getBoundingClientRect(); const xs = (e.clientX - rect.left) / rect.width; const ys = (e.clientY - rect.top) / rect.height; const delta = (e.deltaY > 0) ? -0.1 : 0.1; const newScale = Math.min(Math.max(0.5, scale + delta), 4); pointX += (e.clientX - (rect.left + rect.width / 2)) * (1 - newScale / scale); pointY += (e.clientY - (rect.top + rect.height / 2)) * (1 - newScale / scale); scale = newScale; setTransform(); }
+        image.onmousedown = function(e){ e.preventDefault(); start = { x: e.clientX - pointX, y: e.clientY - pointY }; panning = true; }
+        window.onmouseup = function(){ panning = false; }
+        window.onmousemove = function(e){ e.preventDefault(); if (!panning) return; pointX = (e.clientX - start.x); pointY = (e.clientY - start.y); setTransform(); }
+        let initialPinchDistance = 0, lastScale = 1;
+        function getDistance(p1, p2) { return Math.hypot(p1.pageX - p2.pageX, p1.pageY - p2.pageY); }
+        fullscreenDialog.addEventListener('touchstart', (e) => { if (e.touches.length === 2) { e.preventDefault(); initialPinchDistance = getDistance(e.touches[0], e.touches[1]); lastScale = scale; } else if (e.touches.length === 1) { start = { x: e.touches[0].pageX - pointX, y: e.touches[0].pageY - pointY }; panning = true; } });
+        fullscreenDialog.addEventListener('touchend', () => { panning = false; initialPinchDistance = 0; });
+        fullscreenDialog.addEventListener('touchmove', (e) => { if (e.touches.length === 2 && initialPinchDistance > 0) { e.preventDefault(); const newDist = getDistance(e.touches[0], e.touches[1]); const scaleRatio = newDist / initialPinchDistance; scale = Math.min(Math.max(0.5, lastScale * scaleRatio), 4); setTransform(); } else if (e.touches.length === 1 && panning) { e.preventDefault(); pointX = e.touches[0].pageX - start.x; pointY = e.touches[0].pageY - start.y; setTransform(); } });
+
+    </script>
+</body>
+</html>

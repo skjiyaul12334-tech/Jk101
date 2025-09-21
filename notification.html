@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Notifications</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        
+        :root {
+            --dark-bg: #4c0000; /* Dark Red */
+            --panel-bg: #800000; /* Medium Red */
+            --text-light: #f5c5c5; /* Light Reddish White */
+            --text-white: #ffffff;
+            --teal-glow: #ff5252; /* Bright Red for highlights */
+            --border-color: #6a0000; /* Darker border */
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        .page-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            max-height: 900px;
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--panel-bg);
+        }
+        
+        .page-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: var(--panel-bg);
+            flex-shrink: 0;
+        }
+        .page-header .back-btn {
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            font-weight: bold;
+            color: var(--text-light);
+            text-decoration: none;
+        }
+        .page-header .title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+        
+        .main-content {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .main-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background-color: var(--teal-glow);
+            border-radius: 4px;
+        }
+
+        .notification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .notification-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            background-color: var(--panel-bg);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+        .notification-card:hover {
+            border-color: var(--teal-glow);
+            transform: translateY(-2px);
+        }
+
+        .notification-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background-color: var(--dark-bg);
+        }
+        
+        .notification-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .notification-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+        .notification-description {
+            font-size: 14px;
+            color: var(--text-light);
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .no-items-msg {
+            text-align: center;
+            color: var(--text-light);
+            padding-top: 50px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <header class="page-header">
+            <a href="home.html" class="back-btn">←</a>
+            <span class="title">Notifications</span>
+        </header>
+        
+        <main class="main-content">
+            <div class="notification-list" id="notification-list">
+                <p class="no-items-msg">Loading notifications...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const notificationListContainer = document.getElementById('notification-list');
+
+        function init() {
+            fetchNotifications();
+        }
+
+        function fetchNotifications() {
+            const notificationsRef = database.ref('newoffer');
+            notificationsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                renderNotificationList(data);
+            }, (error) => {
+                console.error("Firebase read failed: " + error.message);
+                notificationListContainer.innerHTML = `<p class="no-items-msg">Could not load notifications.</p>`;
+            });
+        }
+        
+        function renderNotificationList(data) {
+            notificationListContainer.innerHTML = '';
+
+            if (!data) {
+                notificationListContainer.innerHTML = `<p class="no-items-msg">No new notifications.</p>`;
+                return;
+            }
+            
+            let notificationsArray = [];
+            
+            if (data.title || data.imge || data.dis) {
+                notificationsArray = [data];
+            } else {
+                notificationsArray = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                })).reverse();
+            }
+            
+            notificationsArray.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'notification-card';
+                
+                const imageUrl = item.imge || 'https://via.placeholder.com/60x60?text=Offer';
+                const title = item.title || 'No Title';
+                const description = item.dis || 'No description available.';
+                
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="Notification Image" class="notification-image" onerror="this.onerror=null;this.src='https://via.placeholder.com/60x60?text=Error';">
+                    <div class="notification-content">
+                        <h3 class="notification-title">${title}</h3>
+                        <p class="notification-description">${description}</p>
+                    </div>
+                `;
+                
+                notificationListContainer.appendChild(card);
+            });
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

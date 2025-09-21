@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Lobby & Teen Patti</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root { --dark-bg: #0f1923; --panel-bg: #213743; --green: #28a745; --red: #e74c3c; --orange: #ff8c00; --yellow: #ffc107; --text-light: #c1d5e0; --text-white: #ffffff; --teal-glow: #00b8a9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; }
+        .game-container { width: 100%; max-width: 420px; height: 100%; max-height: 900px; background-color: var(--dark-bg); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+        .top-bar { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: var(--panel-bg); z-index: 10; }
+        .profile-icon img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); display: block; transition: border-color 0.3s, box-shadow 0.3s; }
+        .profile-icon.betting img { border-color: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 14px; }
+        .balance .coin-icon { margin-right: 6px; }
+        .balance .add-balance-icon { background-color: var(--green); color: var(--text-white); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; justify-content: center; align-items: center; text-decoration: none; font-weight: 700; margin-left: 8px; font-size: 18px; }
+        .top-icons { display: flex; align-items:center; gap: 15px; font-size: 20px; }
+        .top-icons a { color: var(--text-light); text-decoration: none; font-size: 24px; }
+        .page-content { flex-grow: 1; overflow-y: auto; background-color: #1a1a2e; padding: 10px; display: flex; flex-direction: column; }
+        #teen-patti-game-board { width: 100%; display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+        .tp-top-section { display: flex; justify-content: space-between; align-items: stretch; padding: 0 5px; }
+        .tp-side-players { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; justify-content: space-around; }
+        .tp-demo-player { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .tp-demo-player img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--panel-bg); transition: border-color 0.3s, box-shadow 0.3s; }
+        .tp-demo-player.betting img { border-color: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+        .tp-demo-player .name { font-size: 10px; color: var(--text-light); margin-top: 4px; font-weight: 500; }
+        .tp-card-area { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-grow: 1; }
+        .tp-card-display { width: 100%; max-width: 190px; height: 80px; display: flex; justify-content: center; align-items: center; gap: 5px; perspective: 1000px; }
+        .tp-card { width: 45px; height: 68px; flex-shrink: 0; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1); }
+        .tp-card.flipped { transform: rotateY(180deg); }
+        .tp-card-face { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 20px; font-weight: 700; }
+        .tp-card-front { background: #fff; border: 1px solid #333; }
+        .tp-card-front.red { color: var(--red); }
+        .tp-card-front.black { color: #1e1e1e; }
+        .tp-card-back { background: linear-gradient(145deg, #6d28d9, #4c1d95); border: 2px solid #a78bfa; transform: rotateY(180deg); }
+        .tp-timer { width: 35px; height: 35px; background-color: var(--yellow); color: var(--dark-bg); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: 700; border: 2px solid #fff; box-shadow: 0 0 15px var(--yellow); }
+        .tp-divider { height: 10px; width: 100%; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 Q25,-5 50,5 T100,5" stroke="%23ffc107" stroke-width="2" fill="none"/></svg>'); background-repeat: repeat-x; background-size: 80px 10px; margin: 10px 0 5px 0; }
+        .tp-betting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .tp-betting-box { background: linear-gradient(145deg, #3a506b, #213743); border: 2px solid var(--text-light); border-radius: 10px; padding: 10px 5px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; overflow: hidden; }
+        .tp-betting-box.winning { animation: tp-glow 1.5s infinite alternate; }
+        @keyframes tp-glow { from { box-shadow: 0 0 5px var(--yellow), 0 0 10px var(--yellow); border-color: #fff; } to { box-shadow: 0 0 15px var(--orange), 0 0 25px var(--orange); border-color: var(--yellow); } }
+        .tp-multiplier { font-size: 20px; font-weight: 700; color: var(--yellow); }
+        .tp-bet-type { font-size: 11px; font-weight: 500; color: var(--text-light); margin-top: 5px; }
+        .tp-bet-total { background: rgba(0,0,0,0.4); color: var(--text-white); font-size: 14px; font-weight: 700; padding: 4px 0; border-radius: 5px; margin: 8px 5px 0 5px; position: relative; z-index: 5; }
+        .tp-footer { display: flex; justify-content: flex-end; align-items: center; padding-top: 15px; padding-right: 15px; margin-top: auto; height: 60px; }
+        .tp-coins-container { display: flex; gap: 12px; align-items: flex-end; }
+        .tp-coin { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: 600; cursor: pointer; border: 3px solid transparent; color: var(--text-white); transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), box-shadow 0.3s; }
+        .tp-coin.selected { border-color: var(--yellow); transform: translateY(-10px) scale(1.2); box-shadow: 0 8px 20px rgba(255, 193, 7, 0.4); }
+        .tp-coin-10 { background: #cd7f32; } .tp-coin-50 { background: #c0c0c0; color: #333;}
+        .tp-coin-100 { background: #ffd700; color: #333; } .tp-coin-500 { background: var(--red); }
+        .tp-coin-1k { background: #9b59b6; }
+        #win-toast { position: fixed; bottom: 20px; left: 20px; background-color: rgba(33, 55, 67, 0.95); color: var(--text-white); padding: 12px 20px; border-radius: 8px; border-left: 5px solid var(--green); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); font-size: 14px; font-weight: 500; z-index: 1000; opacity: 0; transform: translateY(20px); visibility: hidden; transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s; }
+        #win-toast.show { opacity: 1; transform: translateY(0); visibility: visible; }
+        #win-toast .winnings-amount { color: var(--yellow); font-weight: 700; margin: 0 4px; }
+        #bottom-demo-player { position: absolute; bottom: 10px; left: 10px; z-index: 20; }
+        #bottom-demo-player img { width: 45px; height: 45px; border: 3px solid var(--yellow); }
+        .chip-stack { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .chip { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle at 70% 30%, #ffffab, #ffd700 60%, #e5a000); border: 2px solid #b8860b; box-shadow: 0 3px 5px rgba(0,0,0,0.5), inset 0px 1px 1px 1px rgba(255,255,255,0.4); transform: translateY(-20px); opacity: 0; animation: drop-in 0.4s forwards cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; justify-content: center; align-items: center; font-size: 9px; font-weight: 700; color: #4d0000; text-shadow: 0 0 1px white; }
+        @keyframes drop-in { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="top-bar"><a href="profile.html" class="profile-icon" id="main-user-profile"><img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P"></a><div class="balance"><span class="coin-icon">💰</span><span id="balance-amount" class="balance-amount">0.00</span><a href="addmoney.html" class="add-balance-icon">+</a></div><div class="top-icons"><a href="notification.html">🔔</a><a href="Menu.html" class="icon-menu">☰</a></div></header>
+        <main class="page-content">
+            <div id="teen-patti-game-board">
+                <div class="tp-top-section">
+                    <div class="tp-side-players left">
+                        <div class="tp-demo-player" data-id="p1"><img src="https://i.pravatar.cc/40?u=player1" alt="P1"><span class="name">Ratul</span></div>
+                        <div class="tp-demo-player" data-id="p2"><img src="https://i.pravatar.cc/40?u=player2" alt="P2"><span class="name">Sumi</span></div>
+                        <div class="tp-demo-player" data-id="p3"><img src="https://i.pravatar.cc/40?u=player3" alt="P3"><span class="name">Anik</span></div>
+                        <div class="tp-demo-player" data-id="p9"><img src="https://i.pravatar.cc/40?u=player9" alt="P9"><span class="name">Riya</span></div>
+                        <div class="tp-demo-player" data-id="p10"><img src="https://i.pravatar.cc/40?u=player10" alt="P10"><span class="name">Sagor</span></div>
+                    </div>
+                    <div class="tp-card-area">
+                        <div class="tp-card-display" id="tp-card-display"></div>
+                        <div class="tp-timer" id="tp-timer">15</div>
+                    </div>
+                    <div class="tp-side-players right">
+                        <div class="tp-demo-player" data-id="p4"><img src="https://i.pravatar.cc/40?u=player4" alt="P4"><span class="name">Priya</span></div>
+                        <div class="tp-demo-player" data-id="p5"><img src="https://i.pravatar.cc/40?u=player5" alt="P5"><span class="name">Bikash</span></div>
+                        <div class="tp-demo-player" data-id="p6"><img src="https://i.pravatar.cc/40?u=player6" alt="P6"><span class="name">Nitu</span></div>
+                        <div class="tp-demo-player" data-id="p11"><img src="https://i.pravatar.cc/40?u=player11" alt="P11"><span class="name">Mithun</span></div>
+                        <div class="tp-demo-player" data-id="p12"><img src="https://i.pravatar.cc/40?u=player12" alt="P12"><span class="name">Zara</span></div>
+                    </div>
+                </div>
+                <div class="tp-divider"></div>
+                <section class="tp-betting-grid">
+                    <div class="tp-betting-box" data-bet-type="trio"><div class="chip-stack"></div><div><div class="tp-multiplier">6x</div><div class="tp-bet-type">Trio</div></div><div class="tp-bet-total">0</div></div>
+                    <div class="tp-betting-box" data-bet-type="color-run"><div class="chip-stack"></div><div><div class="tp-multiplier">5x</div><div class="tp-bet-type">Colour+Run</div></div><div class="tp-bet-total">0</div></div>
+                    <div class="tp-betting-box" data-bet-type="run"><div class="chip-stack"></div><div><div class="tp-multiplier">4x</div><div class="tp-bet-type">Run</div></div><div class="tp-bet-total">0</div></div>
+                    <div class="tp-betting-box" data-bet-type="color"><div class="chip-stack"></div><div><div class="tp-multiplier">3x</div><div class="tp-bet-type">Colour</div></div><div class="tp-bet-total">0</div></div>
+                    <div class="tp-betting-box" data-bet-type="jor"><div class="chip-stack"></div><div><div class="tp-multiplier">2x</div><div class="tp-bet-type">Jor</div></div><div class="tp-bet-total">0</div></div>
+                    <div class="tp-betting-box" data-bet-type="high-card"><div class="chip-stack"></div><div><div class="tp-multiplier">1x</div><div class="tp-bet-type">High Card</div></div><div class="tp-bet-total">0</div></div>
+                </section>
+                <footer class="tp-footer">
+                    <div class="tp-demo-player" id="bottom-demo-player">
+                        <img src="https://i.pravatar.cc/40?u=botmaster" alt="Bot">
+                    </div>
+                    <div class="tp-coins-container">
+                        <div class="tp-coin tp-coin-10" data-value="10">10</div>
+                        <div class="tp-coin tp-coin-50" data-value="50">50</div>
+                        <div class="tp-coin tp-coin-100" data-value="100">100</div>
+                        <div class="tp-coin tp-coin-500" data-value="500">500</div>
+                        <div class="tp-coin tp-coin-1k" data-value="1000">1K</div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <div id="win-toast"> আপনি জিতেছেন 💰<span class="winnings-amount">0</span>! </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc", authDomain: "spin-199a1.firebaseapp.com", databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app", projectId: "spin-199a1", storageBucket: "spin-199a1.appspot.com", };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        let balance = 0.00, loggedInUserKey = null;
+        const balanceEl = document.getElementById('balance-amount');
+        function checkLoginStatus() { loggedInUserKey = sessionStorage.getItem('loggedInUserKey'); if (loggedInUserKey) { loadUserData(loggedInUserKey); } else { window.location.href = 'login.html'; } }
+        function loadUserData(userKey) { database.ref('customers/' + userKey).on('value', (s) => { if (s.exists()) { balance = s.val().balance; updateBalanceUI(); } }); }
+        function updateBalanceUI() { balanceEl.textContent = (parseFloat(balance) || 0).toFixed(2); }
+
+        const tpTimerEl = document.getElementById('tp-timer'), tpCardDisplayEl = document.getElementById('tp-card-display');
+        const tpBettingBoxes = document.querySelectorAll('.tp-betting-box'), tpCoins = document.querySelectorAll('.tp-coin');
+        const winToastEl = document.getElementById('win-toast');
+        const allSidePlayers = document.querySelectorAll('.tp-side-players .tp-demo-player');
+        const masterBotPlayer = document.getElementById('bottom-demo-player');
+        const mainUserProfile = document.getElementById('main-user-profile');
+
+        let tpSelectedCoinValue = 10, tpIsBettingAllowed = false, tpUserBets = {}, tpTotalBets = {};
+        let tpGameTimerInterval, masterDemoBetInterval, sideDemoBetInterval;
+
+        const TP_ROUND_TIME = 15, TP_RESULT_WAIT_TIME = 5000;
+        const TP_RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const TP_SUITS = { '♥': 'red', '♦': 'red', '♣': 'black', '♠': 'black' };
+        
+        function createCardElement() { const card = document.createElement('div'); card.className = 'tp-card flipped'; const front = document.createElement('div'); front.className = 'tp-card-face tp-card-front'; const back = document.createElement('div'); back.className = 'tp-card-face tp-card-back'; card.appendChild(front); card.appendChild(back); return card; }
+        function initTeenPattiGame() { for (let i = 0; i < 3; i++) { tpCardDisplayEl.appendChild(createCardElement()); } tpCoins.forEach(coin => { coin.addEventListener('click', () => { document.querySelector('.tp-coin.selected')?.classList.remove('selected'); coin.classList.add('selected'); tpSelectedCoinValue = parseInt(coin.dataset.value); }); }); document.querySelector('.tp-coin-10').classList.add('selected'); tpBettingBoxes.forEach(box => { box.addEventListener('click', () => handleTeenPattiBet(box)); }); startNewTeenPattiRound(); }
+        
+        function handleTeenPattiBet(boxElement) { 
+            if (!tpIsBettingAllowed) { alert("এখন বেট করা যাবে না।"); return; } 
+            if (parseFloat(balance) < tpSelectedCoinValue) { alert("পর্যাপ্ত ব্যালেন্স নেই।"); return; } 
+            const betType = boxElement.dataset.betType; 
+            database.ref('customers/' + loggedInUserKey + '/balance').transaction(currentBal => { if (currentBal >= tpSelectedCoinValue) return currentBal - tpSelectedCoinValue; return; }).then(({ committed }) => { 
+                if (committed) { 
+                    animateCoinFromSource(mainUserProfile, boxElement, tpSelectedCoinValue);
+                    tpUserBets[betType] = (tpUserBets[betType] || 0) + tpSelectedCoinValue; 
+                    tpTotalBets[betType] = (tpTotalBets[betType] || 0) + tpSelectedCoinValue; 
+                    updateBetTotalUI(betType); 
+                } 
+            }); 
+        }
+
+        function updateBetTotalUI(betType) { const box = document.querySelector(`.tp-betting-box[data-bet-type="${betType}"]`); if (box) box.querySelector('.tp-bet-total').textContent = tpTotalBets[betType] || 0; }
+        
+        function masterDemoBet() {
+            if (!tpIsBettingAllowed) return;
+            const targetBox = tpBettingBoxes[Math.floor(Math.random() * tpBettingBoxes.length)];
+            const betAmount = [500, 1000, 5000, 10000][Math.floor(Math.random() * 4)];
+            animateCoinFromSource(masterBotPlayer, targetBox, betAmount);
+            const betType = targetBox.dataset.betType;
+            tpTotalBets[betType] = (tpTotalBets[betType] || 0) + betAmount;
+            updateBetTotalUI(betType);
+        }
+        
+        function sideDemoBet() {
+            if (!tpIsBettingAllowed) return;
+            const player = allSidePlayers[Math.floor(Math.random() * allSidePlayers.length)];
+            const targetBox = tpBettingBoxes[Math.floor(Math.random() * tpBettingBoxes.length)];
+            const betAmount = [10, 50, 100][Math.floor(Math.random() * 3)];
+            animateCoinFromSource(player, targetBox, betAmount);
+            const betType = targetBox.dataset.betType;
+            tpTotalBets[betType] = (tpTotalBets[betType] || 0) + betAmount;
+            updateBetTotalUI(betType);
+        }
+
+        function animateCoinFromSource(fromEl, toEl, betAmount) {
+            fromEl.classList.add('betting');
+            setTimeout(() => fromEl.classList.remove('betting'), 400);
+
+            const container = document.querySelector('.game-container');
+            const startRect = fromEl.getBoundingClientRect(), toRect = toEl.getBoundingClientRect(), containerRect = container.getBoundingClientRect();
+            const coin = document.createElement('div');
+            coin.className = 'chip';
+            coin.textContent = betAmount >= 1000 ? `${betAmount / 1000}K` : betAmount;
+            Object.assign(coin.style, {
+                position: 'absolute',
+                zIndex: '100',
+                transition: 'transform 0.5s cubic-bezier(0.5, 0, 1, 1)',
+                opacity: '1',
+                animation: 'none',
+                transform: `translate(${startRect.left + (startRect.width / 2) - containerRect.left - 12}px, ${startRect.top + (startRect.height / 2) - containerRect.top - 12}px)`
+            });
+            container.appendChild(coin);
+            
+            setTimeout(() => {
+                const toX = toRect.left + (toRect.width * (0.2 + Math.random() * 0.6)) - containerRect.left - 12;
+                const toY = toRect.top + (toRect.height * (0.2 + Math.random() * 0.6)) - containerRect.top - 12;
+                coin.style.transform = `translate(${toX}px, ${toY}px)`;
+            }, 10);
+            
+            setTimeout(() => {
+                container.removeChild(coin);
+                const chipStack = toEl.querySelector('.chip-stack');
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.textContent = betAmount >= 1000 ? `${betAmount / 1000}K` : betAmount;
+                chip.style.top = `${Math.random() * 70 + 15}%`;
+                chip.style.left = `${Math.random() * 70 + 15}%`;
+                chipStack.appendChild(chip);
+            }, 510);
+        }
+
+        function startNewTeenPattiRound() { 
+            tpUserBets = {}; tpTotalBets = {}; 
+            tpBettingBoxes.forEach(box => { box.classList.remove('winning'); box.querySelector('.chip-stack').innerHTML = ''; updateBetTotalUI(box.dataset.betType); }); 
+            document.querySelectorAll('.tp-card').forEach(card => card.classList.add('flipped')); 
+            tpIsBettingAllowed = true; 
+            let timeLeft = TP_ROUND_TIME; 
+            tpTimerEl.textContent = timeLeft; 
+            clearInterval(tpGameTimerInterval); clearInterval(masterDemoBetInterval); clearInterval(sideDemoBetInterval);
+            tpGameTimerInterval = setInterval(() => { 
+                timeLeft--; tpTimerEl.textContent = timeLeft; 
+                if (timeLeft <= 0) { 
+                    clearInterval(tpGameTimerInterval); clearInterval(masterDemoBetInterval); clearInterval(sideDemoBetInterval);
+                    tpIsBettingAllowed = false; tpTimerEl.textContent = "🔒"; 
+                    showTeenPattiResult(); 
+                } 
+            }, 1000); 
+            masterDemoBetInterval = setInterval(masterDemoBet, 100); 
+            sideDemoBetInterval = setInterval(sideDemoBet, 500);
+        }
+
+        function showTeenPattiResult() {
+            let targetWinType;
+            const allBetTypes = Array.from(tpBettingBoxes).map(box => box.dataset.betType);
+            let maxBetAmount = -1;
+            for (const type in tpUserBets) { if (tpUserBets[type] > maxBetAmount) maxBetAmount = tpUserBets[type]; }
+            const maxBetTypes = [];
+            if (maxBetAmount > 0) { for (const type in tpUserBets) { if (tpUserBets[type] === maxBetAmount) maxBetTypes.push(type); } }
+            let possibleWinners = allBetTypes.filter(type => !maxBetTypes.includes(type));
+            if (possibleWinners.length === 0) { possibleWinners = allBetTypes; }
+            targetWinType = getRandomItem(possibleWinners);
+
+            let hand = createHandFor(targetWinType);
+            const cardElements = document.querySelectorAll('.tp-card');
+            cardElements.forEach((card, index) => {
+                const cardData = hand[index];
+                const frontFace = card.querySelector('.tp-card-front');
+                frontFace.className = `tp-card-face tp-card-front ${cardData.color}`;
+                frontFace.innerHTML = `<span>${cardData.rank}</span><span>${cardData.suit}</span>`;
+                setTimeout(() => card.classList.remove('flipped'), 100 * index);
+            });
+            
+            const winningBox = document.querySelector(`.tp-betting-box[data-bet-type="${targetWinType}"]`);
+            setTimeout(() => {
+                if (winningBox) {
+                    winningBox.classList.add('winning');
+                    if (tpUserBets[targetWinType] > 0) {
+                        const multiplier = parseInt(winningBox.querySelector('.tp-multiplier').textContent);
+                        const winnings = tpUserBets[targetWinType] * multiplier;
+                        database.ref('customers/' + loggedInUserKey + '/balance').transaction(bal => (bal || 0) + winnings);
+                        winToastEl.querySelector('.winnings-amount').textContent = winnings.toFixed(2);
+                        winToastEl.classList.add('show');
+                        setTimeout(() => winToastEl.classList.remove('show'), 3000);
+                    }
+                }
+            }, 700);
+            setTimeout(startNewTeenPattiRound, TP_RESULT_WAIT_TIME);
+        }
+        
+        function getRandomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function createHandFor(winType) { let hand = []; const allSuits = Object.keys(TP_SUITS); switch (winType) { case 'trio': const trioRank = getRandomItem(TP_RANKS); const chosenSuits = []; while(chosenSuits.length < 3) { const s = getRandomItem(allSuits); if (!chosenSuits.includes(s)) chosenSuits.push(s); } hand = chosenSuits.map(s => ({ rank: trioRank, suit: s, color: TP_SUITS[s] })); break; case 'color-run': case 'run': const startRankIndex = Math.floor(Math.random() * (TP_RANKS.length - 2)); const runRanks = [TP_RANKS[startRankIndex], TP_RANKS[startRankIndex + 1], TP_RANKS[startRankIndex + 2]]; if (winType === 'color-run') { const suit = getRandomItem(allSuits); hand = runRanks.map(r => ({ rank: r, suit: suit, color: TP_SUITS[suit] })); } else { hand = runRanks.map(r => { const suit = getRandomItem(allSuits); return { rank: r, suit: suit, color: TP_SUITS[suit] }; }); } break; case 'color': const colorSuit = getRandomItem(allSuits); while(hand.length < 3) { const r = getRandomItem(TP_RANKS); if (!hand.find(c => c.rank === r)) hand.push({ rank: r, suit: colorSuit, color: TP_SUITS[colorSuit] }); } break; case 'jor': const pairRank = getRandomItem(TP_RANKS); const otherRank = getRandomItem(TP_RANKS.filter(r => r !== pairRank)); const pairSuits = []; while(pairSuits.length < 2) { const s = getRandomItem(allSuits); if (!pairSuits.includes(s)) pairSuits.push(s); } hand.push({ rank: pairRank, suit: pairSuits[0], color: TP_SUITS[pairSuits[0]] }); hand.push({ rank: pairRank, suit: pairSuits[1], color: TP_SUITS[pairSuits[1]] }); const otherSuit = getRandomItem(allSuits); hand.push({ rank: otherRank, suit: otherSuit, color: TP_SUITS[otherSuit] }); break; default: while(hand.length < 3) { const rank = getRandomItem(TP_RANKS); const suit = getRandomItem(allSuits); if (!hand.find(c => c.rank === rank)) hand.push({ rank, suit, color: TP_SUITS[suit] }); } if (evaluateTeenPattiHand(hand) !== 'high-card') return createHandFor('high-card'); break; } return hand; }
+        function evaluateTeenPattiHand(hand) { const ranks = hand.map(c => TP_RANKS.indexOf(c.rank)).sort((a,b) => a-b); const suits = hand.map(c => c.suit); const isColor = suits.every(s => s === suits[0]); const isRun = (ranks[1] === ranks[0] + 1 && ranks[2] === ranks[1] + 1) || (ranks[0]===0 && ranks[1]===1 && ranks[2]===12); if (isColor && isRun) return 'color-run'; const rankCounts = {}; hand.forEach(c => { rankCounts[c.rank] = (rankCounts[c.rank] || 0) + 1; }); if (Object.values(rankCounts).includes(3)) return 'trio'; if (isRun) return 'run'; if (isColor) return 'color'; if (Object.values(rankCounts).includes(2)) return 'jor'; return 'high-card'; }
+        
+        function init() { checkLoginStatus(); initTeenPattiGame(); }
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Special Offers</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        /* --- New Color Scheme based on the provided image --- */
+        :root { 
+            --dark-bg: #4c0000; /* Deep Maroon Background */
+            --panel-bg: #380000; /* Darker Maroon for panels */
+            --green: #ffc107;   /* Changed to Yellow for success states */
+            --red: #e74c3c;
+            --orange: #ff8c00;
+            --yellow: #ffc107;  /* Yellow is the main accent color */
+            --text-light: #f0e6e6; /* Off-white for better readability */
+            --text-white: #ffffff; 
+            --teal-glow: #ffc107; /* Focus/Glow effect changed to Yellow */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; align-items: center; padding: 5px; }
+        .page-container { width: 100%; max-width: 420px; height: 100%; max-height: 900px; background-color: var(--dark-bg); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--panel-bg); }
+        
+        /* --- Header Styles --- */
+        .page-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; background-color: var(--panel-bg); flex-shrink: 0; }
+        .page-header .header-left { display: flex; align-items: center; }
+        .page-header .back-btn { font-size: 24px; cursor: pointer; margin-right: 15px; font-weight: bold; color: var(--text-light); text-decoration: none; }
+        .page-header .title { font-size: 18px; font-weight: 700; color: var(--text-white); }
+        
+        /* --- Content Styles --- */
+        .main-content { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        
+        .offer-list-container { display: flex; flex-direction: column; gap: 15px; }
+
+        .offer-card { 
+            background-color: var(--panel-bg); 
+            border-radius: 10px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+            border: 1px solid rgba(255, 193, 7, 0.1);
+        }
+        .offer-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .offer-card img { 
+            width: 100%; 
+            height: 150px; 
+            object-fit: cover; 
+            display: block; 
+        }
+        
+        .offer-card-content { padding: 15px; }
+        .offer-card-content h3 { 
+            color: var(--yellow); 
+            margin-bottom: 8px; 
+        }
+        .offer-card-content p { 
+            color: var(--text-light); 
+            font-size: 14px; 
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .offer-code-wrapper { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background-color: var(--dark-bg); 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            border: 1px dashed var(--teal-glow);
+        }
+        
+        .offer-code-text { 
+            font-family: monospace; 
+            font-size: 18px; 
+            color: var(--teal-glow); 
+            font-weight: bold; 
+        }
+        
+        .offer-copy-btn { 
+            background: none; 
+            border: none; 
+            color: var(--text-light); 
+            font-size: 20px; 
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .offer-copy-btn:hover {
+            color: var(--teal-glow);
+        }
+        .offer-copy-btn.copied {
+            color: var(--green);
+        }
+
+        .no-offers-msg { 
+            text-align: center; 
+            color: var(--text-light); 
+            padding-top: 50px; 
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-left">
+                <!-- This button will take the user back to the profile page -->
+                <a href="profile.html" class="back-btn">←</a>
+                <span class="title">Special Offers</span>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="offer-list-container" class="offer-list-container">
+                <p class="no-offers-msg">Loading offers...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let loggedInUserKey = null;
+
+        // UI Elements
+        const offerListContainerEl = document.getElementById('offer-list-container');
+
+        // --- INITIALIZATION ---
+        function init() {
+            checkLoginStatus();
+        }
+
+        // --- AUTH & DATA LOADING ---
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                fetchOffers();
+            } else {
+                fetchOffers();
+            }
+        }
+        
+        function fetchOffers() {
+            const offersRef = database.ref('offer');
+            
+            offersRef.on('value', (snapshot) => {
+                renderOfferList(snapshot.val());
+            });
+        }
+        
+        function renderOfferList(offersData) {
+            offerListContainerEl.innerHTML = '';
+
+            if (!offersData) {
+                offerListContainerEl.innerHTML = `<p class="no-offers-msg">No special offers available right now.</p>`;
+                return;
+            }
+            
+            const offersArray = Object.values(offersData).reverse();
+            
+            offersArray.forEach(offer => {
+                const card = document.createElement('div');
+                card.className = 'offer-card';
+
+                card.innerHTML = `
+                    <img src="${offer.Oimag}" alt="Offer Image">
+                    <div class="offer-card-content">
+                        <h3>Get ₹${offer.amou} Bonus!</h3>
+                        <p>Use this promo code. Valid until: ${offer.date}</p>
+                        <div class="offer-code-wrapper">
+                            <span class="offer-code-text">${offer.Code}</span>
+                            <button class="offer-copy-btn" title="Copy Code">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const copyButton = card.querySelector('.offer-copy-btn');
+                copyButton.addEventListener('click', () => {
+                    navigator.clipboard.writeText(offer.Code).then(() => {
+                        copyButton.innerHTML = '✅';
+                        copyButton.classList.add('copied');
+                        
+                        setTimeout(() => {
+                            copyButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>`;
+                            copyButton.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                        alert('Could not copy the code.');
+                    });
+                });
+                
+                offerListContainerEl.appendChild(card);
+            });
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

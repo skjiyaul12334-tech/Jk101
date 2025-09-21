@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JK101 - Login & Signup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK Scripts (Auth and Database) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --primary-red: #b91c1c;
+            --dark-red: #7f1d1d;
+            --dark-form-bg: rgba(40, 0, 0, 0.85);
+            --gold-color: #ffd700;
+            --dark-gold: #b89b00;
+            --text-light: #fecaca;
+            --error-red: #e53935;
+            --success-green: #43a047;
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; min-height: 100vh;
+            font-family: 'Poppins', sans-serif; overflow: hidden;
+        }
+        .page-wrapper {
+            min-height: 100vh; width: 100vw; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px;
+            background: linear-gradient(135deg, var(--dark-red), var(--primary-red));
+            position: relative; z-index: 1; box-sizing: border-box;
+        }
+        
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(127, 29, 29, 0.9);
+            display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        .spinner {
+            width: 60px; height: 60px; border: 6px solid rgba(255, 215, 0, 0.3);
+            border-top-color: var(--gold-color); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+
+        .title-wrapper { text-align: center; margin-bottom: 20px; }
+        .main-title { font-size: 3.5rem; font-weight: 700; color: var(--gold-color); text-shadow: 0 0 5px var(--gold-color), 0 0 15px var(--dark-gold), 0 2px 2px rgba(0,0,0,0.5); margin: 0; line-height: 1; letter-spacing: 2px; }
+        .subtitle { font-size: 1rem; color: var(--text-light); opacity: 0.9; margin-top: 5px; }
+        .form-container { background-color: var(--dark-form-bg); MARGIN-LEFT: 15PX;
+    MARGIN-RIGHT: 15PX; border: 3px solid var(--dark-gold); border-radius: 20px;  margin-bottom: 10px;
+    margin-top: -20px; padding: 25px; width: 80%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-image: linear-gradient(to bottom, #ffd700, #c5a200) 1; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        .form-group label { color: var(--text-light); font-weight: 600; font-size: 1rem; margin-bottom: 5px; }
+        .form-group input { background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 10px 15px; color: var(--text-light); font-size: 0.9rem; outline: none; transition: border-color 0.3s; }
+        .form-group input:focus { border-color: var(--gold-color); }
+        .submit-button { width: 100%; padding: 12px; font-size: 1.1rem; font-weight: 700; color: var(--dark-red); background: linear-gradient(180deg, var(--gold-color), var(--dark-gold)); border: none; border-radius: 50px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: all 0.2s ease; margin-top: 10px; }
+        .form-switcher { text-align: center; margin-top: 20px; color: var(--text-light); }
+        .form-switcher a { color: var(--gold-color); text-decoration: none; font-weight: 600; }
+
+        #toast-notification {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            border-radius: 50px;
+            background-color: #333;
+            color: white;
+            font-size: 1rem;
+            z-index: 10000;
+            transition: bottom 0.5s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        #toast-notification.show { bottom: 30px; }
+        #toast-notification.error { background-color: var(--error-red); }
+        #toast-notification.success { background-color: var(--success-green); }
+
+        .update-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(127, 29, 29, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .update-dialog, .apk-url-dialog {
+            position: relative;
+            background-color: var(--dark-form-bg);
+            border: 3px solid var(--dark-gold);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            color: var(--text-light);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .update-dialog h2, .apk-url-dialog h2 {
+            color: var(--gold-color);
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .update-dialog p {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        .update-dialog .submit-button {
+            width: 80%;
+        }
+        
+        .url-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        #apk-url-display {
+            width: 100%;
+            background-color: rgba(0,0,0,0.4);
+            border: 1px solid var(--dark-gold);
+            border-radius: 10px;
+            padding: 12px 45px 12px 15px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        #copy-apk-url-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            padding: 5px;
+            background: none;
+            border: none;
+        }
+        #copy-apk-url-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--gold-color);
+        }
+        .apk-url-dialog p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 20px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            color: var(--text-light);
+            cursor: pointer;
+            border: none;
+            background: none;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader-overlay" class="loader-overlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <div id="toast-notification"></div>
+
+    <div id="update-dialog-overlay" class="update-overlay hidden">
+        <div class="update-dialog">
+            <h2>Update Available</h2>
+            <p id="update-description">A new version of the app is available. Please update to continue.</p>
+            <button id="update-install-btn" class="submit-button">Install</button>
+        </div>
+    </div>
+
+    <div id="apk-url-dialog-overlay" class="update-overlay hidden">
+        <div class="apk-url-dialog">
+            <button id="close-apk-dialog-btn" class="close-btn">&times;</button>
+            <h2>Download Link</h2>
+            <div class="url-wrapper">
+                <input type="text" id="apk-url-display" value="Loading link..." readonly>
+                <button id="copy-apk-url-btn" title="Copy Link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                </button>
+            </div>
+            <p>Now copy this URL and open it in your browser.</p>
+            
+            <button id="open-link-btn" class="submit-button" style="width: 80%; margin-top: 15px;">Click Here</button>
+
+        </div>
+    </div>
+
+    <div class="page-wrapper">
+        <div class="title-wrapper hidden" id="title-wrapper">
+            <h1 class="main-title">JK101</h1>
+            <p id="form-subtitle" class="subtitle">Login to your Account</p>
+        </div>
+
+        <div id="login-container" class="form-container hidden">
+            <!-- Login Form HTML -->
+        </div>
+
+        <div id="signup-container" class="form-container hidden">
+            <!-- Signup Form HTML -->
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+            appId: "1:201888892362:android:ba9ef620319f85b56ebb33"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const loaderOverlay = document.getElementById('loader-overlay');
+        const updateDialogOverlay = document.getElementById('update-dialog-overlay');
+        const updateDescriptionEl = document.getElementById('update-description');
+        const updateInstallBtn = document.getElementById('update-install-btn');
+        const apkUrlDialogOverlay = document.getElementById('apk-url-dialog-overlay');
+        const apkUrlDisplay = document.getElementById('apk-url-display');
+        const copyApkUrlBtn = document.getElementById('copy-apk-url-btn');
+        const closeApkDialogBtn = document.getElementById('close-apk-dialog-btn');
+        const toastEl = document.getElementById('toast-notification');
+        
+        const openLinkBtn = document.getElementById('open-link-btn');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showUpdateDialog();
+        });
+        
+        function showUpdateDialog() {
+            database.ref('Update').once('value').then(snapshot => {
+                let description = "A new version of the app is available. Please update to continue.";
+                if (snapshot.exists()) {
+                    const updateData = snapshot.val();
+                    description = updateData.Description || description;
+                }
+                updateDescriptionEl.textContent = description;
+                
+            }).catch(error => {
+                console.error("Error fetching update data:", error);
+                showToast("Couldn't get update information.", 'error');
+            }).finally(() => {
+                loaderOverlay.classList.add('hidden');
+                updateDialogOverlay.classList.remove('hidden');
+            });
+        }
+        
+        function showApkUrlDialog() {
+            updateDialogOverlay.classList.add('hidden');
+            apkUrlDialogOverlay.classList.remove('hidden');
+            
+            apkUrlDisplay.value = "Loading link...";
+
+            const apkUrlRef = database.ref('Update/appurl');
+
+            apkUrlRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    apkUrlDisplay.value = snapshot.val();
+                } else {
+                    apkUrlDisplay.value = "URL not found in database.";
+                }
+            }, (error) => {
+                console.error("Firebase Read Error at 'Update/appurl':", error);
+                let errorMessage = "Error loading URL.";
+                if (error.code === "PERMISSION_DENIED") {
+                    errorMessage = "Permission Denied. Check Firebase Rules.";
+                }
+                apkUrlDisplay.value = errorMessage;
+            });
+        }
+
+        // Event Listeners for buttons
+        updateInstallBtn.addEventListener('click', showApkUrlDialog);
+
+        copyApkUrlBtn.addEventListener('click', () => {
+            const urlToCopy = apkUrlDisplay.value;
+            if (urlToCopy && urlToCopy.startsWith('http')) {
+                navigator.clipboard.writeText(urlToCopy).then(() => {
+                    alert('Link Copied!');
+                }).catch(err => {
+                    alert('Failed to copy link. Please try again.');
+                    console.error('Clipboard copy failed:', err);
+                });
+            } else {
+                alert('No valid link to copy.');
+            }
+        });
+
+        openLinkBtn.addEventListener('click', () => {
+            const urlToOpen = apkUrlDisplay.value;
+            if (urlToOpen && urlToOpen.startsWith('http')) {
+                window.open(urlToOpen, '_blank');
+            } else {
+                alert('No valid link to open.');
+            }
+        });
+
+        closeApkDialogBtn.addEventListener('click', () => {
+            apkUrlDialogOverlay.classList.add('hidden');
+            database.ref('Update/appurl').off('value'); 
+            updateDialogOverlay.classList.remove('hidden');
+        });
+
+        function showToast(message, type = '') {
+            toastEl.textContent = message;
+            toastEl.className = type ? `show ${type}` : 'show';
+            setTimeout(() => {
+                toastEl.className = toastEl.className.replace('show', '');
+            }, 3000);
+        }
+
+    </script>
+
+</body>
+</html>

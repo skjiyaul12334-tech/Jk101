@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Menu</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        
+        /* --- CSS Updated to Match Image Colors --- */
+        :root { 
+            --purple-grad-start: #5e2a5e;
+            --purple-grad-end: #2c0b2c;
+            --panel-bg: #4a2c4a;
+            --panel-border: #6b4b6b;
+            --accent-pink: #e91e63;
+            --text-light: #e1bee7;
+            --text-white: #ffffff; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: radial-gradient(ellipse at center, var(--purple-grad-start), var(--purple-grad-end));
+            color: var(--text-light); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 5px; 
+        }
+
+        .page-container { 
+            width: 100%; 
+            max-width: 420px; 
+            height: 100%; 
+            max-height: 900px; 
+            background-color: transparent; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            border: 1px solid var(--panel-border); 
+        }
+        
+        /* --- Header Styles --- */
+        .page-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 12px; 
+            background-color: var(--panel-bg); 
+            flex-shrink: 0; 
+        }
+        .page-header .header-left { display: flex; align-items: center; }
+        .page-header .back-btn { 
+            font-size: 24px; 
+            cursor: pointer; 
+            margin-right: 15px; 
+            font-weight: bold; 
+            color: var(--text-light); 
+            text-decoration: none; 
+        }
+        .page-header .title { 
+            font-size: 18px; 
+            font-weight: 700; 
+            color: var(--text-white); 
+        }
+        
+        /* --- Content Styles --- */
+        .main-content { 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex-grow: 1; 
+        }
+        
+        .menu-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        .menu-item { 
+            display: flex; 
+            align-items: center; 
+            background-color: var(--panel-bg); 
+            padding: 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background-color 0.2s ease; 
+            font-size: 16px; 
+            color: var(--text-light);
+            text-decoration: none;
+            border: 1px solid var(--panel-border);
+        }
+        .menu-item:hover { 
+            background-color: var(--panel-border); 
+        }
+        .menu-item .icon { 
+            font-size: 22px; 
+            margin-right: 15px; 
+            width: 25px; 
+            text-align: center;
+            color: var(--accent-pink); /* Updated icon color */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-left">
+                <!-- This button will take the user back to the home page -->
+                <a href="home.html" class="back-btn">←</a>
+                <span class="title">Menu</span>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="menu-list">
+                <a href="bet-history.html" class="menu-item">
+                    <span class="icon">📜</span> 
+                    Bet History
+                </a>
+                <a href="refer-earn.html" class="menu-item">
+                    <span class="icon">👥</span> 
+                    Refer & Earn
+                </a>
+                <a href="contact.html" class="menu-item">
+                    <span class="icon">📞</span> 
+                    Contact Us
+                </a>
+                 <a href="profile.html" class="menu-item">
+                    <span class="icon">👤</span> 
+                    My Profile
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+    <script>
+        // No Firebase Database or Storage needed for this simple navigation page.
+        // We only need to check if the user is logged in.
+
+        // --- INITIALIZATION ---
+        function init() {
+            checkLoginStatus();
+        }
+
+        // --- AUTHENTICATION CHECK ---
+        function checkLoginStatus() {
+            const loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (!loggedInUserKey) {
+                // If user is not logged in, they cannot access the menu.
+                // Redirect them to the login page.
+                window.location.href = 'login.html';
+            }
+            // If they are logged in, the page will load normally.
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lottery History</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+        :root { --dark-bg: #0f1923; --panel-bg: #213743; --green: #28a745; --red: #e74c3c; --orange: #ff8c00; --yellow: #ffc107; --text-light: #c1d5e0; --text-white: #ffffff; --teal-glow: #00b8a9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; }
+        .page-container {
+            width: 100%; max-width: 420px; height: 100%; max-height: 900px;
+            background: linear-gradient(to bottom, #2c0b2e, #1a0a1e);
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        
+        .page-header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 12px; background-color: rgba(0,0,0,0.2); }
+        .header-left { display: flex; align-items: center; }
+        .page-header .back-btn { font-size: 24px; cursor: pointer; margin-right: 15px; font-weight: bold; color: var(--text-light); text-decoration: none; }
+        .page-header .title { font-size: 18px; font-weight: 700; color: var(--text-white); }
+        
+        .header-wallet { display: flex; align-items: center; background-color: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 20px; }
+        .balance-amount { font-weight: 700; font-size: 14px; color: var(--text-white); }
+        .add-money-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; }
+        .add-money-icon svg { width: 22px; height: 22px; fill: var(--green); }
+        
+        .main-content { flex-grow: 1; padding: 15px; display: flex; flex-direction: column; overflow: hidden; }
+        .static-content { flex-shrink: 0; }
+        .history-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 5px; margin-top: 20px; }
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-thumb { background: var(--teal-glow); border-radius: 4px; }
+
+        .winner-banner { background: linear-gradient(90deg, #d4fc79 0%, #96e6a1 100%); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(150, 230, 161, 0.3); color: #333; }
+        .winner-banner-icon { font-size: 40px; }
+        .winner-info .title { font-size: 1.2rem; font-weight: 900; color: #1a53ff; }
+        .winner-info .subtitle { font-size: 0.9rem; font-weight: 500; }
+
+        .instruction-text { background-color: rgba(0, 0, 0, 0.2); padding: 12px 15px; border-radius: 8px; margin-top: 20px; text-align: center; font-size: 0.9rem; line-height: 1.5; color: var(--text-light); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        .history-item {
+            background-color: rgba(40, 20, 60, 0.6); backdrop-filter: blur(5px); border-radius: 12px;
+            padding: 15px; display: grid; grid-template-columns: auto 1fr; align-items: center;
+            gap: 15px; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .item-icon { grid-row: 1 / 4; font-size: 36px; color: var(--teal-glow); }
+        .item-details-main { display: flex; justify-content: space-between; align-items: center; }
+        .ticket-number { font-size: 1.3rem; font-weight: 700; color: var(--text-white); }
+        .item-details-status { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-top: 8px; }
+        .ticket-status { font-weight: 700; padding: 4px 10px; border-radius: 15px; align-self: flex-start; }
+        .status-win { background-color: var(--green); color: var(--text-white); }
+        .status-nowin { background-color: var(--red); color: var(--text-white); }
+        .prize-info { display: flex; gap: 10px; align-items: center; font-weight: 700; }
+        .prize-type { color: var(--teal-glow); }
+        .prize-amount { color: var(--yellow); }
+        .item-details-sub { grid-column: 2 / 3; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 0.8rem; color: var(--text-light); border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; }
+
+        .ticket-action button, .ticket-action div { border-radius: 6px; padding: 8px 15px; font-size: 1rem; font-weight: 900; border: none; cursor: pointer; }
+        .ticket-price { background-color: #3d5afe; color: white; }
+        .claim-btn { background-color: var(--yellow); color: #333; }
+        .claimed-btn { background-color: #6c757d; color: var(--text-light); cursor: not-allowed; }
+        .no-history-msg { text-align: center; padding: 40px 15px; color: var(--text-light); }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="page-header">
+            <div class="header-left">
+                <a href="lottery.html" class="back-btn">←</a>
+                <span class="title">My Lottery History</span>
+            </div>
+            <div class="header-wallet">
+                <span class="balance-amount" id="header-balance-amount">₹0.00</span>
+                <a href="addmoney.html" class="add-money-icon" title="Add Cash">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                </a>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="static-content">
+                <div class="winner-banner">
+                    <div class="winner-banner-icon">🏆</div>
+                    <div class="winner-info">
+                        <div class="title">Check Results</div>
+                        <div class="subtitle">See if you are the next lucky winner!</div>
+                    </div>
+                </div>
+                <div class="instruction-text">
+                    <i class="fas fa-info-circle"></i> If you win your lottery, click the claim button and add your prize amount to your wallet, otherwise you will lose the next day.
+                </div>
+            </div>
+
+            <div class="history-list" id="history-list-container">
+                <p class="no-history-msg">Loading history...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        let loggedInUserKey = null;
+
+        const historyListContainer = document.getElementById('history-list-container');
+        const headerBalanceEl = document.getElementById('header-balance-amount');
+
+        function init() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (!loggedInUserKey) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadUserWallet(loggedInUserKey);
+            // সরাসরি পারচেজ হিস্টোরি ফেচ করা হচ্ছে, winner ডেটার প্রয়োজন নেই
+            fetchPurchaseHistory(loggedInUserKey);
+        }
+
+        function loadUserWallet(userKey) {
+            const userRef = database.ref('customers/' + userKey);
+            userRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const balance = snapshot.val().balance || 0;
+                    headerBalanceEl.textContent = `₹${balance.toFixed(2)}`;
+                }
+            });
+        }
+
+        function fetchPurchaseHistory(userKey) {
+            const historyRef = database.ref('lotteryPurchases').orderByChild('userId').equalTo(userKey);
+            historyRef.on('value', (snapshot) => { renderHistoryList(snapshot.val()); });
+        }
+        
+        function renderHistoryList(data) {
+            historyListContainer.innerHTML = '';
+            if (!data) {
+                historyListContainer.innerHTML = '<p class="no-history-msg">You have not purchased any tickets yet.</p>';
+                return;
+            }
+            const allHistory = Object.keys(data).map(key => ({ ...data[key], purchaseKey: key })).sort((a, b) => b.timestamp - a.timestamp);
+            
+            allHistory.forEach(item => {
+                const historyCard = document.createElement('div');
+                historyCard.className = 'history-item';
+                
+                // সরাসরি আইটেম থেকে স্ট্যাটাস চেক করা হচ্ছে
+                const isWinner = item.status === 'You Win';
+                const isClaimed = item.claimed === true;
+
+                let statusHTML;
+                if (isWinner) {
+                    const prizeType = item.prize_type ? item.prize_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Prize';
+                    statusHTML = `
+                        <div class="ticket-status status-win">You Win</div>
+                        <div class="prize-info">
+                            <div class="prize-type">${prizeType}</div>
+                            <div class="prize-amount">₹${item.prize_amount || 0}</div>
+                        </div>
+                    `;
+                } else if (item.status === 'No Win') {
+                    statusHTML = `<div class="ticket-status status-nowin">No Win</div>`;
+                } else { // ডিফল্ট বা 'Pending' হলে
+                    statusHTML = `<div class="ticket-status" style="background-color: var(--orange);">Pending</div>`;
+                }
+
+                let actionHTML;
+                if (isWinner) {
+                    actionHTML = isClaimed 
+                        ? `<div class="claimed-btn">Claimed</div>` 
+                        : `<button class="claim-btn" data-key="${item.purchaseKey}" data-amount="${item.prize_amount}">Claim</button>`;
+                } else {
+                    actionHTML = `<div class="ticket-price">₹${item.price}</div>`;
+                }
+
+                historyCard.innerHTML = `
+                    <div class="item-icon">🎟️</div>
+                    <div class="item-details-main">
+                        <div class="ticket-number">${item.ticketId}</div>
+                        <div class="ticket-action">${actionHTML}</div>
+                    </div>
+                    <div class="item-details-status">${statusHTML}</div>
+                    <div class="item-details-sub">
+                        <div class="ticket-date">${new Date(item.timestamp).toLocaleString('en-IN')}</div>
+                    </div>`;
+                historyListContainer.appendChild(historyCard);
+            });
+        }
+        
+        historyListContainer.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('claim-btn')) {
+                const claimBtn = e.target;
+                const purchaseKey = claimBtn.dataset.key;
+                const amountToClaim = parseFloat(claimBtn.dataset.amount);
+
+                if (!purchaseKey || isNaN(amountToClaim) || amountToClaim <= 0) {
+                    alert('Invalid claim data. Cannot proceed.'); return;
+                }
+                claimBtn.disabled = true; claimBtn.textContent = 'Claiming...';
+                try {
+                    // ওয়ালেটে টাকা যোগ করা
+                    const userBalanceRef = database.ref(`customers/${loggedInUserKey}/balance`);
+                    await userBalanceRef.transaction(currentBalance => (currentBalance || 0) + amountToClaim);
+                    
+                    // টিকিটকে 'claimed' হিসেবে মার্ক করা
+                    const purchaseRef = database.ref(`lotteryPurchases/${purchaseKey}/claimed`);
+                    await purchaseRef.set(true);
+                    
+                    alert(`Successfully claimed ₹${amountToClaim}! It has been added to your wallet.`);
+                } catch (error) {
+                    console.error("Claim failed:", error);
+                    alert("Failed to claim the prize. Please try again.");
+                    claimBtn.disabled = false; claimBtn.textContent = 'Claim';
+                }
+            }
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>

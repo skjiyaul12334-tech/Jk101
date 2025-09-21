@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lottery Game</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+        :root { 
+            --dark-bg: #4c0000; /* Dark Red */
+            --panel-bg: #800000; /* Medium Red */
+            --green: #28a745; 
+            --red: #e74c3c; 
+            --orange: #ff8c00; 
+            --yellow: #fdd835; 
+            --text-light: #f5c5c5; /* Light Reddish White */
+            --text-white: #ffffff; 
+            --teal-glow: #ff5252; /* Bright Red for highlights */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; }
+        .game-container {
+            width: 100%; max-width: 420px; height: 100%; max-height: 900px;
+            background: linear-gradient(to bottom, #6a0000, #4c0000);
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        .top-bar { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: rgba(0,0,0,0.2); }
+        .profile-icon img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); }
+        .balance-wrapper { display: flex; align-items: center; background-color: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 20px; }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 14px; color: var(--text-white); }
+        .add-money-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; }
+        .add-money-icon svg { width: 22px; height: 22px; fill: var(--green); }
+        .top-icons { display: flex; align-items:center; gap: 12px; font-size: 20px; }
+        .header-link-btn { background-color: rgba(255,255,255,0.1); color: var(--text-light); border: none; border-radius: 5px; padding: 5px 15px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .icon-menu { color: var(--text-light); text-decoration: none; font-size: 24px; }
+
+        .lottery-page-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .lottery-controls { padding: 15px 15px 10px 15px; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
+        .ticket-list-scroll-container { flex-grow: 1; overflow-y: auto; padding: 0 15px 15px 15px; }
+        .ticket-list-scroll-container::-webkit-scrollbar { width: 4px; }
+        .ticket-list-scroll-container::-webkit-scrollbar-thumb { background: var(--teal-glow); border-radius: 4px; }
+
+        .winner-banner { background: linear-gradient(90deg, #d4fc79 0%, #96e6a1 100%); border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-shadow: 0 4px 15px rgba(150, 230, 161, 0.3); color: #333; }
+        .winner-banner-left { display: flex; align-items: center; gap: 12px; }
+        .winner-banner-left img { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #ffffff; }
+        .winner-info .title { font-size: 1.3rem; font-weight: 900; color: #1a53ff; }
+        .winner-prize { background-color: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; }
+        .time-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .time-tab-btn { padding: 12px 5px; border: none; border-radius: 8px; background-color: var(--panel-bg); color: var(--text-light); font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+        .time-tab-btn.active { background: linear-gradient(to right, #e53935, #b71c1c); color: var(--text-white); }
+        .section-header { background-color: white; color: var(--dark-red); padding: 6px 15px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
+        .section-header h3 { font-size: 1.1rem; font-weight: 900; }
+        .lottery-result-btn { background-color: var(--red); color: white; padding: 5px 15px; border-radius: 20px; text-decoration: none; font-weight: 700; font-size: 0.9rem; }
+        .category-filters { display: flex; justify-content: center; gap: 10px; }
+        .category-filter-btn { background-color: #555; color: white; border: 2px solid transparent; border-radius: 20px; padding: 6px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+        .category-filter-btn.active { background: linear-gradient(to right, #ff9a44, #ff5f6d); border-color: #fff; }
+
+        .ticket-list { display: flex; flex-direction: column; gap: 15px; }
+        .ticket-item {
+            background-color: var(--panel-bg);
+            border-radius: 12px; padding: 15px; display: grid; grid-template-columns: auto 1fr auto;
+            align-items: center; gap: 15px; border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative; overflow: hidden;
+        }
+        
+        .ticket-item-icon {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            grid-column: 1 / 2;
+        }
+        .ticket-item-icon .fa-ticket-alt {
+            font-size: 38px;
+            color: var(--text-white);
+            transform: rotate(-25deg);
+        }
+        
+        .ticket-category {
+            position: absolute; top: 0; left: 0; background-color: var(--yellow); color: var(--dark-bg);
+            padding: 3px 8px; border-radius: 12px 0 8px 0; font-size: 0.75rem; font-weight: 700;
+        }
+        .ticket-details { grid-column: 2 / 3; display: flex; flex-direction: column; gap: 8px; }
+        .ticket-number { font-size: 1.4rem; font-weight: 700; color: var(--text-white); }
+        .ticket-number span { font-weight: 400; color: var(--text-light); font-size: 1rem; }
+        .ticket-stock {
+            display: inline-block; background-color: var(--teal-glow); color: var(--dark-bg);
+            padding: 5px 12px; border-radius: 15px; font-weight: 700; font-size: 0.9rem; align-self: flex-start;
+        }
+        .buy-btn-container { grid-column: 3 / 4; display: flex; justify-content: center; }
+        .buy-btn {
+            background-color: var(--green); color: white; border: none; border-radius: 8px; padding: 12px 25px;
+            font-size: 1.1rem; font-weight: 900; cursor: pointer; text-transform: uppercase;
+        }
+        .buy-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .no-tickets-msg { text-align: center; padding: 40px 15px; color: var(--text-light); }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="top-bar">
+             <a href="profile.html" class="profile-icon"><img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P"></a>
+            <div class="balance-wrapper">
+                <div class="balance"><span id="balance-amount">0.00</span></div>
+                <a href="addmoney.html" class="add-money-icon" title="Add Cash"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></a>
+            </div>
+            <div class="top-icons">
+                <a href="lotteryhistory.html" class="header-link-btn">History</a>
+                <a href="Menu.html" class="icon-menu">☰</a>
+            </div>
+        </header>
+        
+        <div class="lottery-page-body">
+            <div class="lottery-controls">
+                <div class="winner-banner"><div class="winner-banner-left"><img src="https://i.pravatar.cc/80?u=winner1" alt="Winner"><div class="winner-info"><div class="title">Fast Win</div><div class="ticket-id">Last winner of 10,000</div></div></div><div class="winner-banner-right"><div class="winner-prize">10,000</div></div></div>
+                <div class="time-tabs" id="time-tabs-container"><button class="time-tab-btn" data-time="Morning">Morning</button><button class="time-tab-btn" data-time="Evening">Evening</button><button class="time-tab-btn" data-time="Night">Night</button></div>
+                <div class="section-header"><h3 id="active-time-title">Loading...</h3><a href="lotteryresult.html" class="lottery-result-btn">Result</a></div>
+                <div class="category-filters" id="category-filters-container"><button class="category-filter-btn active" data-category="5 SEM">5-SEM</button><button class="category-filter-btn" data-category="10 SEM">10-SEM</button><button class="category-filter-btn" data-category="50 SEM">50-SEM</button></div>
+            </div>
+
+            <div class="ticket-list-scroll-container">
+                <div class="ticket-list" id="ticket-list-container">
+                    <p class="no-tickets-msg">Loading tickets...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        let balance = 0.00; 
+        let loggedInUserKey = null;
+        let allLotteryTickets = [];
+        let systemActiveSession = null;
+        
+        const balanceEl = document.getElementById('balance-amount');
+        const profileMainImgEl = document.getElementById('profile-main-img');
+        const timeTabsContainer = document.getElementById('time-tabs-container');
+        const categoryFiltersContainer = document.getElementById('category-filters-container');
+        const activeTimeTitle = document.getElementById('active-time-title');
+        const ticketListContainer = document.getElementById('ticket-list-container');
+        
+        let currentCategory = '5 SEM';
+
+        function getActiveSessionBasedOnTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const currentTime = hours * 100 + minutes;
+
+            if (currentTime <= 1200) return 'Morning';
+            else if (currentTime > 1200 && currentTime <= 1600) return 'Evening';
+            else if (currentTime > 1600 && currentTime <= 2000) return 'Night';
+            else return 'None';
+        }
+
+        function checkAndUpdateActiveSession() {
+            const newActiveSession = getActiveSessionBasedOnTime();
+            if (newActiveSession !== systemActiveSession) {
+                systemActiveSession = newActiveSession;
+                timeTabsContainer.querySelectorAll('.time-tab-btn').forEach(b => b.classList.remove('active'));
+                if (systemActiveSession !== 'None') {
+                    const activeTab = timeTabsContainer.querySelector(`.time-tab-btn[data-time="${systemActiveSession}"]`);
+                    if (activeTab) activeTab.classList.add('active');
+                    activeTimeTitle.textContent = systemActiveSession;
+                } else {
+                    activeTimeTitle.textContent = 'Closed';
+                }
+                renderFilteredTickets();
+            }
+        }
+        
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) loadUserData(loggedInUserKey);
+            else window.location.href = 'login.html';
+        }
+        
+        function loadUserData(userKey) {
+            const userRef = database.ref('customers/' + userKey);
+            userRef.on('value', (s) => {
+                if (s.exists()) {
+                    balance = s.val().balance || 0;
+                    updateBalanceUI();
+                    profileMainImgEl.src = `https://i.pravatar.cc/40?u=${userKey}`;
+                } else handleLogout();
+            });
+        }
+
+        function updateBalanceUI() { 
+            balanceEl.textContent = `₹${(parseFloat(balance) || 0).toFixed(2)}`;
+        }
+
+        function fetchLotteryData() {
+            const lotteryRef = database.ref('Lottery');
+            lotteryRef.on('value', (snapshot) => {
+                const sessionsData = snapshot.val();
+                allLotteryTickets = []; 
+                if (sessionsData) {
+                    for (const sessionName in sessionsData) {
+                        const ticketsInSession = sessionsData[sessionName];
+                        for (const ticketKey in ticketsInSession) {
+                            allLotteryTickets.push({
+                                id: ticketKey,
+                                session: sessionName,
+                                ...ticketsInSession[ticketKey]
+                            });
+                        }
+                    }
+                }
+                renderFilteredTickets(); 
+            });
+        }
+        
+        function renderFilteredTickets() {
+            ticketListContainer.innerHTML = '';
+            if (systemActiveSession === 'None') {
+                ticketListContainer.innerHTML = '<p class="no-tickets-msg">No lottery is active at this time. Please check back later.</p>';
+                return;
+            }
+
+            const filteredTickets = allLotteryTickets.filter(t => t.session === systemActiveSession && t.category === currentCategory);
+
+            if (filteredTickets.length === 0) {
+                ticketListContainer.innerHTML = '<p class="no-tickets-msg">No tickets available for this selection.</p>';
+                return;
+            }
+
+            filteredTickets.forEach(item => {
+                const isOutOfStock = item.stockStatus === 'Out of Stock' || (item.quantity != null && item.quantity <= 0);
+                const ticketHTML = `
+                    <div class="ticket-item">
+                        <div class="ticket-category">${item.category}</div>
+                        <div class="ticket-item-icon">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        <div class="ticket-details">
+                            <div class="ticket-number"><span>Ticket no</span> ${item.number}</div>
+                            <div class="ticket-stock">${item.quantity != null ? item.quantity : 'N/A'} ${item.unit || 'left'}</div>
+                        </div>
+                        <div class="buy-btn-container">
+                            <button class="buy-btn" 
+                                data-price="${item.price}" 
+                                data-key="${item.id}" 
+                                data-session="${item.session}" 
+                                ${isOutOfStock ? 'disabled' : ''}>
+                                ${isOutOfStock ? 'Sold Out' : `₹${item.price}`}
+                            </button>
+                        </div>
+                    </div>`;
+                ticketListContainer.insertAdjacentHTML('beforeend', ticketHTML);
+            });
+        }
+
+        async function checkIfWinner(session, category, ticketNumber) {
+            const winnerRef = database.ref(`winner/${session}/${category}`);
+            try {
+                const snapshot = await winnerRef.once('value');
+                if (snapshot.exists()) {
+                    const winnerData = snapshot.val();
+                    for (const prizeKey in winnerData) {
+                        if (winnerData[prizeKey].winning_number === ticketNumber) { return true; }
+                    }
+                }
+                return false;
+            } catch (error) { console.error("Error checking winner status:", error); return false; }
+        }
+
+        function setupEventListeners() {
+            categoryFiltersContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.category-filter-btn');
+                if (btn) {
+                    categoryFiltersContainer.querySelectorAll('.category-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCategory = btn.dataset.category;
+                    renderFilteredTickets();
+                }
+            });
+
+            ticketListContainer.addEventListener('click', async (e) => {
+                const buyBtn = e.target.closest('.buy-btn');
+                if (buyBtn && !buyBtn.disabled) {
+                    buyBtn.disabled = true;
+                    const originalText = buyBtn.textContent; 
+                    buyBtn.textContent = '...';
+                    
+                    const price = parseFloat(buyBtn.dataset.price);
+                    const ticketKey = buyBtn.dataset.key;
+                    const session = buyBtn.dataset.session;
+                    const ticketRef = database.ref(`Lottery/${session}/${ticketKey}`);
+                    
+                    try {
+                        const result = await ticketRef.transaction(ticket => {
+                            if (ticket && ticket.quantity > 0 && balance >= price) {
+                                ticket.quantity--;
+                                if (ticket.quantity === 0) ticket.stockStatus = "Out of Stock";
+                                return ticket;
+                            }
+                            return; 
+                        });
+
+                        if (result.committed) {
+                            await database.ref(`customers/${loggedInUserKey}/balance`).transaction(b => (b || 0) - price);
+                            const ticketData = result.snapshot.val();
+                            
+                            if (session && session !== 'None') {
+                                const sessionStatRef = database.ref(`Lottaryss/${session}`);
+                                sessionStatRef.transaction(currentData => {
+                                    if (currentData === null) {
+                                        currentData = { coins: 0, custo: 0, bettors: {} };
+                                    }
+                                    currentData.coins = (currentData.coins || 0) + price;
+                                    if (!currentData.bettors) {
+                                        currentData.bettors = {};
+                                    }
+                                    if (!currentData.bettors[loggedInUserKey]) {
+                                        currentData.bettors[loggedInUserKey] = true;
+                                        currentData.custo = (currentData.custo || 0) + 1;
+                                    }
+                                    return currentData;
+                                });
+                            }
+                            
+                            const isWinner = await checkIfWinner(session, ticketData.category, ticketData.number);
+                            const status = isWinner ? 'You Win' : 'No Win';
+
+                            await database.ref('lotteryPurchases').push({
+                                userId: loggedInUserKey, ticketId: ticketData.number,
+                                ticketKey: ticketKey, price: price,
+                                session: session, 
+                                category: ticketData.category,
+                                timestamp: firebase.database.ServerValue.TIMESTAMP, status: status
+                            });
+                            alert(`Ticket ${ticketData.number} purchased! Status: ${status}`);
+                        } else {
+                            alert("Failed to buy. Ticket may be sold out or balance is low.");
+                            buyBtn.disabled = false; 
+                            buyBtn.textContent = originalText;
+                        }
+                    } catch (error) {
+                        console.error("Purchase Error: ", error);
+                        alert("An error occurred. Please try again.");
+                        buyBtn.disabled = false; 
+                        buyBtn.textContent = originalText;
+                    }
+                }
+            });
+        }
+        
+        function handleLogout() {
+            sessionStorage.removeItem('loggedInUserKey');
+            window.location.href = 'login.html';
+        }
+
+        function init() {
+            checkLoginStatus(); 
+            fetchLotteryData();
+            setupEventListeners();
+            checkAndUpdateActiveSession();
+            setInterval(checkAndUpdateActiveSession, 30000); 
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

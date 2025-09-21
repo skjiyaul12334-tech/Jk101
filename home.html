@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Lobby</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root { 
+            --dark-bg: #0f1923; --panel-bg: #213743; --green: #28a745; --red: #e74c3c; --orange: #ff8c00; --yellow: #ffc107; --text-light: #c1d5e0; --text-white: #ffffff; --teal-glow: #00b8a9; 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            color: var(--text-light); 
+            background-color: #1a120f; 
+            overflow: hidden;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .game-container { 
+            width: 100%; height: 100%; 
+            background-image: url('https://i.ibb.co/HfBGRyqK/image-search-1752778924462.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden; display: flex; flex-direction: column; 
+        }
+        .top-bar { 
+            flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; 
+            padding: 8px 12px; background-color: rgba(30, 10, 30, 0.4); 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .profile-icon-link { display: block; }
+        .profile-icon-link img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); display: block; }
+        
+        .balance-container { display: flex; align-items: center; gap: 8px; }
+        .balance-wrapper { display: flex; align-items: center; background-color: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 14px; }
+        .add-money-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; }
+        .add-money-icon svg { width: 22px; height: 22px; fill: var(--green); }
+        
+        .vip-button {
+            background: linear-gradient(45deg, var(--yellow), var(--orange));
+            color: var(--dark-bg);
+            font-weight: bold;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 15px;
+            text-decoration: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .top-icons { display: flex; align-items:center; gap: 16px; font-size: 24px; }
+        .top-icons a { color: var(--text-light); text-decoration: none; display: flex; align-items: center; }
+        
+        .notification-icon { position: relative; }
+        .notification-icon svg { width: 26px; height: 26px; fill: currentColor; }
+        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; font-weight: bold; display: none; justify-content: center; align-items: center; }
+        .notification-badge.show { display: flex; }
+        
+        .page-content { flex-grow: 1; overflow-y: auto; padding: 20px 15px; display: flex; flex-direction: column; gap: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        #banner-slider-container { flex-shrink: 0; width: 100%; height: 150px; overflow: hidden; background-color: rgba(74, 51, 64, 0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; }
+        #banner-slider { display: flex; height: 100%; transition: transform 0.5s ease-in-out; }
+        .banner-slide { width: 100%; height: 100%; flex-shrink: 0; }
+        .banner-slide img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+        
+        .game-showcase { display: flex; justify-content: center; align-items: flex-start; gap: 10px; width: 100%; }
+        .game-column { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .game-column-center { flex: 1.5; }
+        .game-card-showcase { width: 100%; border-radius: 12px; overflow: hidden; display: block; background-color: rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .game-card-showcase:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); }
+        .game-card-showcase img { width: 100%; height: auto; display: block; aspect-ratio: 1 / 1; object-fit: cover; }
+        .center-game-card img { aspect-ratio: 3 / 4; }
+        #aviator-side-card-link { border: 3px solid var(--yellow); }
+
+        @keyframes dialog-fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes dialog-fade-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
+
+        .dialog-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 15px; }
+        .dialog-base { animation-duration: 0.3s; animation-timing-function: ease-out; animation-fill-mode: forwards; }
+        .dialog-base.open { animation-name: dialog-fade-in; }
+        .dialog-base.close { animation-name: dialog-fade-out; }
+        .dialog-close-btn { position: absolute; width: 32px; height: 32px; background-color: #fff; color: #555; border-radius: 50%; border: none; font-size: 24px; font-weight: bold; line-height: 32px; display: flex; justify-content: center; align-items: center; cursor: pointer; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); top: 10px; right: 10px; z-index: 10; }
+        
+        #reward-popup-dialog .dialog-close-btn { top: 10px; right: 10px; }
+
+        /* Referral Popup Styles */
+        #referral-popup-dialog { background-color: white; color: #333; border-radius: 16px; padding: 25px; width: 100%; max-width: 380px; font-family: 'Roboto', sans-serif; position: relative; text-align: center; }
+        .referral-popup-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #2c3e50; }
+        .referral-popup-description { font-size: 15px; color: #555; line-height: 1.5; margin-bottom: 20px; }
+        .referral-input-group { display: flex; align-items: center; margin-bottom: 25px; width: 100%; }
+        #referral-code-input { flex-grow: 1; min-width: 0; border: 1px solid #ccc; background: #f7f7f7; padding: 12px 15px; font-size: 16px; color: #333; outline: none; border-radius: 8px 0 0 8px; }
+        #referral-submit-btn { background-color: #2c2c2c; color: white; border: none; border-radius: 0 8px 8px 0; padding: 12px 20px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; flex-shrink: 0; }
+        .share-section-title { font-size: 14px; color: #7f8c8d; margin-top: 20px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .social-share-container { display: flex; justify-content: center; gap: 20px; }
+        .social-share-btn { display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; text-decoration: none; color: white; transition: transform 0.2s, box-shadow 0.2s; }
+        .social-share-btn svg { width: 24px; height: 24px; fill: currentColor; }
+        .whatsapp { background-color: #25D366; } .facebook { background-color: #1877F2; } .more { background-color: #7f8c8d; }
+
+        /* Reward Popup Styles */
+        #reward-popup-dialog { background-color: white; width: 100%; max-width: 350px; border-radius: 20px; padding: 0; overflow: hidden; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; }
+        .reward-header { background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); padding: 20px; position: relative; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .reward-coin-icon { width: 80px; height: 80px; color: white; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); animation: coin-bounce 2s infinite ease-in-out; }
+        @keyframes coin-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .reward-content { padding: 25px; padding-top: 15px; }
+        .reward-title { font-size: 26px; font-weight: 700; color: #333; margin-bottom: 10px; }
+        .reward-description { font-size: 15px; color: #666; line-height: 1.5; margin-bottom: 20px; }
+        .reward-amount-wrapper { display: inline-flex; align-items: center; gap: 8px; background-color: #fff4d8; padding: 8px 20px; border-radius: 50px; margin-bottom: 25px; border: 1px solid #ffde82; }
+        #reward-coin-amount { font-size: 22px; font-weight: 700; color: #d35400; }
+        #reward-claim-btn { width: 100%; padding: 15px; background: #e0e0e0; color: #888; border: none; border-radius: 12px; font-size: 20px; font-weight: 700; cursor: not-allowed; }
+        #reward-claim-btn.active { background: linear-gradient(45deg, #f76b1c, #fad961); color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="main-container">
+        <header class="top-bar">
+             <a href="profile.html" class="profile-icon-link"><img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P"></a>
+            <div class="balance-container">
+                <div class="balance-wrapper">
+                    <div class="balance"><span class="coin">💰</span><span id="balance-amount">0.00</span></div>
+                    <a href="addmoney.html" class="add-money-icon"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></a>
+                </div>
+                <a href="vip.html" class="vip-button">VIP</a>
+            </div>
+            <div class="top-icons"><a href="notification.html" id="notification-icon-btn" class="notification-icon"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg><span id="notification-count-badge" class="notification-badge"></span></a><a href="Menu.html" class="menu-icon-link">☰</a></div>
+        </header>
+        <div class="page-content">
+            <div id="banner-slider-container"><div id="banner-slider"></div></div>
+            <div class="game-showcase">
+                <div class="game-column">
+                    <a href="spin-win.html" class="game-card-showcase" id="spinwin-card-link"><img src="https://i.ibb.co/ccvT0LYR/image-search-1752782132636.png" alt="Spin and Win"></a>
+                    <a href="lottery.html" class="game-card-showcase" id="lottery-card-link"><img src="https://i.ibb.co/dXQN4cQ/image-search-1752781922270.webp" alt="Lottery"></a>
+                    <a href="casino.html" class="game-card-showcase" id="casino-card-link"><img src="https://i.ibb.co/8ntDJjnD/image-search-1752781604898.png" alt="Casino"></a>
+                </div>
+                <div class="game-column game-column-center">
+                    <a href="aviator.html" class="game-card-showcase center-game-card" id="aviator-center-card-link"><img src="https://i.ibb.co/G4JqpQy0/image-search-1752783450265.jpg" alt="Center Game"></a>
+                </div>
+                <div class="game-column">
+                    <a href="solots.html" class="game-card-showcase" id="slots-card-link"><img src="https://i.ibb.co/vNHdtZw/image-search-1752781616994.png" alt="Slots"></a>
+                    <a href="teenpatti.html" class="game-card-showcase" id="teenpatti-card-link"><img src="https://i.ibb.co/bMdkVJC6/image-search-1752781494544.png" alt="Teen Patti"></a>
+                    <a href="aviator.html" class="game-card-showcase" id="aviator-side-card-link"><img src="https://i.ibb.co/tTpjmc46/image-search-1752781694535.jpg" alt="Aviator"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Referral Popup -->
+    <div class="dialog-overlay" id="referral-popup-overlay">
+        <div class="dialog-base" id="referral-popup-dialog">
+            <a class="dialog-close-btn" id="referral-popup-close-btn">×</a>
+            <h3 class="referral-popup-title">Refer Your Friends & Earn!</h3>
+            <p class="referral-popup-description">Get a ৳10 bonus when you apply a friend's referral code. Your friend gets a bonus too when you play!</p>
+            <div class="referral-input-group">
+                <input type="text" id="referral-code-input" placeholder="Enter Friend's Code">
+                <button id="referral-submit-btn">Submit Code</button>
+            </div>
+            <p class="share-section-title">OR SHARE YOUR LINK</p>
+            <div class="social-share-container">
+                 <a href="#" class="social-share-btn whatsapp"><svg viewBox="0 0 24 24"><path d="M12.04 2.01C6.58 2.01 2.13 6.46 2.13 12c0 1.74.45 3.48 1.34 5l-1.4 5.12 5.24-1.38c1.45.81 3.09 1.23 4.73 1.23h.01c5.46 0 9.9-4.45 9.9-9.91s-4.44-9.93-9.9-9.93zM17.29 15.8c-.28-.14-1.66-.82-1.92-.91s-.45-.14-.64.14-.73.91-.89 1.1-.32.22-.6.07a7.99 7.99 0 01-2.35-1.45c-.56-.56-1.04-1.24-.94-1.45s.14-.2.28-.35c.12-.12.28-.28.42-.42.1-.09.18-.2.27-.34.09-.14.05-.28-.02-.42s-.64-1.53-.87-2.1c-.24-.56-.48-.48-.64-.49-.16-.01-.35-.01-.54-.01s-.45.07-.68.35c-.24.28-.91.89-1.11 2.15s-.2 2.37.05 2.7.94 1.79 2.15 2.5 2.08.91 2.97 1.15c.6.16 1.14.13 1.56.08.48-.05 1.66-.68 1.89-1.34s.24-1.21.16-1.34c-.05-.12-.2-.2-.42-.34z"/></svg></a>
+                <a href="#" class="social-share-btn facebook"><svg viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-1.5c-1.1 0-1.5.7-1.5 1.5V12h3l-.5 3h-2.5v6.8c4.56-.93 8-4.96 8-9.8z"/></svg></a>
+                <a href="#" class="social-share-btn more"><svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Popup -->
+    <div class="dialog-overlay" id="reward-popup-overlay">
+        <div class="dialog-base" id="reward-popup-dialog">
+            <a class="dialog-close-btn" id="reward-popup-close-btn">×</a>
+            <div class="reward-header">
+                <svg class="reward-coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="coin-gradient" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:rgb(255,223,0);stop-opacity:1" /><stop offset="100%" style="stop-color:rgb(255,165,0);stop-opacity:1" /></linearGradient></defs><path fill="url(#coin-gradient)" d="M256 512c141.4 0 256-114.6 256-256S397.4 0 256 0S0 114.6 0 256S114.6 512 256 512z"/><path fill="#FFC107" d="M256 64c106 0 192 86 192 192s-86 192-192 192S64 362 64 256S150 64 256 64z"/><path fill="#FFF" opacity="0.5" d="M144.6 144.6c22-22 51.2-35.4 83.4-35.4c3.5 0 7 .2 10.5 .6c-49.2 11.2-86.4 51.4-93.9 100.2c-1.1 7.2-1.6 14.5-1.6 22.1c0 32.2 13.4 61.4 35.4 83.4c-45-21.4-75.4-66.6-75.4-119.5c0-38.4 16.8-73.2 43.2-97.8z"/><path fill="#E65100" d="M256 448c-106 0-192-86-192-192S150 64 256 64s192 86 192 192s-86 192-192 192zm0-352c-88.2 0-160 71.8-160 160s71.8 160 160 160s160-71.8 160-160S344.2 96 256 96z"/><text x="256" y="320" font-family="Roboto, sans-serif" font-size="200" font-weight="bold" fill="#B75200" text-anchor="middle">C</text></svg>
+            </div>
+            <div class="reward-content">
+                <h2 class="reward-title">New User Reward</h2>
+                <p class="reward-description">Welcome! As a special thank you for joining us, here is a reward for you.</p>
+                <div class="reward-amount-wrapper">
+                    <span id="reward-coin-amount">x0</span>
+                </div>
+                <button id="reward-claim-btn">NOTHING TO CLAIM</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        let loggedInUserKey = null;
+
+        const balanceEl = document.getElementById('balance-amount');
+        const profileMainImgEl = document.getElementById('profile-main-img');
+
+        function openDialog(overlayId) {
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                overlay.style.display = 'flex';
+                const dialog = overlay.querySelector('.dialog-base');
+                if(dialog) {
+                    dialog.classList.remove('close');
+                    dialog.classList.add('open');
+                }
+            }
+        }
+
+        function closeDialog(overlayId, onClosedCallback) {
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                const dialog = overlay.querySelector('.dialog-base');
+                if(dialog) {
+                    dialog.classList.remove('open');
+                    dialog.classList.add('close');
+                }
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    if (onClosedCallback) onClosedCallback();
+                }, 300);
+            }
+        }
+
+        function init() {
+            checkLoginStatus();
+        }
+
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                loadUserData(loggedInUserKey);
+                setupAllPopups();
+                setupFirebaseListeners();
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        function setupAllPopups() {
+            const referralCloseBtn = document.getElementById('referral-popup-close-btn');
+            const rewardCloseBtn = document.getElementById('reward-popup-close-btn');
+            
+            referralCloseBtn.addEventListener('click', () => closeDialog('referral-popup-overlay', () => openDialog('reward-popup-overlay')));
+            rewardCloseBtn.addEventListener('click', () => closeDialog('reward-popup-overlay'));
+
+            if (!sessionStorage.getItem('popupChainShown')) {
+                setTimeout(() => {
+                    openDialog('referral-popup-overlay');
+                    sessionStorage.setItem('popupChainShown', 'true');
+                }, 1000);
+            }
+        }
+
+        function loadUserData(userKey) {
+            database.ref('customers/' + userKey).on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    
+                    if (userData.Issue && userData.Issue.Status === 'on') {
+                        window.location.href = 'technical issue.html';
+                        return;
+                    }
+
+                    balanceEl.textContent = (parseFloat(userData.balance) || 0).toFixed(2);
+                    profileMainImgEl.src = `https://i.pravatar.cc/40?u=${userKey}`;
+                }
+            });
+        }
+        
+        function setupFirebaseListeners() {
+            const sliderContainer = document.getElementById('banner-slider-container');
+            const slider = document.getElementById('banner-slider');
+            let slideInterval, currentSlide = 0;
+            database.ref('gbaner/gslid').on('value', (snapshot) => {
+                clearInterval(slideInterval); slider.innerHTML = ''; currentSlide = 0;
+                const slidesData = snapshot.val();
+                if (slidesData && typeof slidesData === 'object') {
+                    const imageUrls = Object.values(slidesData).map(item => item.imageUrl || item).filter(url => typeof url === 'string');
+                    if (imageUrls.length > 0) {
+                        imageUrls.forEach(url => { slider.innerHTML += `<div class="banner-slide"><img src="${url}" alt="Banner"></div>`; });
+                        sliderContainer.style.display = 'block';
+                        if (imageUrls.length > 1) {
+                            slideInterval = setInterval(() => {
+                                currentSlide = (currentSlide + 1) % imageUrls.length;
+                                slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+                            }, 3000);
+                        }
+                    } else { sliderContainer.style.display = 'none'; }
+                } else { sliderContainer.style.display = 'none'; }
+            });
+            
+            const rewardCoinAmount = document.getElementById('reward-coin-amount');
+            const rewardClaimBtn = document.getElementById('reward-claim-btn');
+            database.ref('Newreward/Coin').on('value', (snapshot) => {
+                const coinValue = snapshot.val() || 0;
+                if (coinValue > 0) {
+                    rewardCoinAmount.textContent = `x${coinValue}`;
+                    rewardClaimBtn.textContent = 'Claim Now';
+                    rewardClaimBtn.classList.add('active');
+                    rewardClaimBtn.disabled = false;
+                } else {
+                    rewardCoinAmount.textContent = 'x0';
+                    rewardClaimBtn.textContent = 'NOTHING TO CLAIM';
+                    rewardClaimBtn.classList.remove('active');
+                    rewardClaimBtn.disabled = true;
+                }
+            });
+
+            // Game Status Listener
+            const gameCards = {
+                'Spin': document.getElementById('spinwin-card-link'),
+                'Lottery': document.getElementById('lottery-card-link'),
+                'Casino': document.getElementById('casino-card-link'),
+                'Slots': document.getElementById('slots-card-link'),
+                'TeenPatti': document.getElementById('teenpatti-card-link'),
+                'Aviator': [document.getElementById('aviator-center-card-link'), document.getElementById('aviator-side-card-link')]
+            };
+
+            database.ref(`customers/${loggedInUserKey}/Game`).on('value', (snapshot) => {
+                const gameStatuses = snapshot.val() || {};
+                for (const gameName in gameCards) {
+                    const elements = Array.isArray(gameCards[gameName]) ? gameCards[gameName] : [gameCards[gameName]];
+                    elements.forEach(element => {
+                        if (element) {
+                            element.style.display = (gameStatuses[gameName] === 'on') ? 'none' : 'block';
+                        }
+                    });
+                }
+            });
+        }
+
+        document.querySelector('.vip-button').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.body.style.transition = 'opacity 0.3s ease-out';
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'vip.html'; }, 300);
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>

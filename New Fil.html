@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Download Page</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 90%;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    /* Floating Button */
+    .download-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #ff4b5c;
+      color: white;
+      border: none;
+      outline: none;
+      padding: 15px 20px;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+      background: #ff2a40;
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Download Our App</h1>
+    <p>Click the button below to download the latest version.</p>
+  </div>
+
+  <button class="download-btn" onclick="downloadApp()">⬇ Download</button>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+      authDomain: "spin-199a1.firebaseapp.com",
+      databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "spin-199a1",
+      storageBucket: "spin-199a1.appspot.com",
+      messagingSenderId: "201888892362",
+      appId: "1:201888892362:android:ba9ef620319f85b56ebb33"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Download function
+    function downloadApp() {
+      const apkRef = database.ref("Apks/Url");
+      apkRef.once("value").then(snapshot => {
+        const apkUrl = snapshot.val();
+        if (apkUrl) {
+          window.open(apkUrl, "_blank");
+        } else {
+          alert("Download link not available.");
+        }
+      }).catch(error => {
+        console.error(error);
+        alert("Error fetching download link.");
+      });
+    }
+  </script>
+</body>
+</html>

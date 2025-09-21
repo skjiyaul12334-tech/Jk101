@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Add Cash</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        /* --- New Color Scheme based on the provided image --- */
+        :root { 
+            --dark-bg: #4c0000; /* Deep Maroon Background */
+            --panel-bg: #380000; /* Darker Maroon for panels */
+            --green: #ffc107;   /* Changed to Yellow for primary actions */
+            --red: #ff8c00;     /* Changed to Orange for contrast */
+            --orange: #ffc107;  /* Changed to Yellow for consistency */
+            --yellow: #ffc107;  /* Yellow remains the main accent color */
+            --text-light: #f0e6e6; /* Off-white for better readability on red */
+            --text-white: #ffffff; 
+            --teal-glow: #ffc107; /* Focus/Glow effect changed to Yellow */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; align-items: center; padding: 5px; }
+        .page-container { width: 100%; max-width: 420px; height: 100%; max-height: 900px; background-color: var(--dark-bg); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--panel-bg); }
+        
+        /* --- Header Styles --- */
+        .page-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; background-color: var(--panel-bg); flex-shrink: 0; }
+        .page-header .header-left { display: flex; align-items: center; }
+        .page-header .back-btn { font-size: 24px; cursor: pointer; margin-right: 15px; font-weight: bold; color: var(--text-light); text-decoration: none; }
+        .page-header .title { font-size: 18px; font-weight: 700; color: var(--text-white); }
+        .header-btn { background-color: var(--teal-glow); color: var(--dark-bg); border: none; border-radius: 5px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        
+        /* --- Content Styles --- */
+        .main-content { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        
+        #add-money-banner-container { text-align: center; margin-bottom: 20px; display: none; }
+        #add-money-banner-image { width: 100%; height: auto; max-height: 120px; border-radius: 8px; object-fit: cover; }
+        
+        .preset-amount-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0 25px 0; }
+        .preset-amount-btn { 
+            border: 1px solid #6e0000; 
+            border-radius: 8px; 
+            padding: 12px 5px; 
+            font-size: 16px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        .preset-amount-btn:nth-child(odd) {
+            background-color: var(--yellow);
+            color: var(--dark-bg);
+        }
+        .preset-amount-btn:nth-child(even) {
+            background-color: var(--red);
+            color: var(--text-white);
+        }
+        .preset-amount-btn:hover { opacity: 0.9; }
+        .preset-amount-btn.active { 
+            border: 2px solid var(--teal-glow);
+            box-shadow: 0 0 8px var(--teal-glow);
+            transform: scale(0.98);
+        }
+
+        .form-container { display: none; flex-direction: column; gap: 15px; margin-top: 20px; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 5px; color: var(--text-light); }
+        .form-group input[type="number"], .form-group input[type="text"] { width: 100%; padding: 12px; background: var(--panel-bg); border: 1px solid #6e0000; border-radius: 8px; color: var(--text-white); font-size: 16px; }
+        .form-group input:focus { outline: none; border-color: var(--teal-glow); }
+        
+        .file-upload-btn { display: inline-block; padding: 12px 20px; background: var(--orange); color: var(--dark-bg); border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; }
+        input[type="file"] { display: none; }
+        .file-name-display { font-size: 12px; color: var(--text-light); margin-top: 8px; }
+
+        .submit-btn { width: 100%; padding: 15px; background: var(--green); color: var(--dark-bg); border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; }
+        .submit-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        #upi-payment-btn { 
+            background-color: var(--teal-glow); 
+            margin-top: 10px; 
+            display: none; 
+        }
+        
+        #toggle-manual-upload-container { display: flex; align-items: center; justify-content: center; margin-top: 20px; cursor: pointer; padding: 10px; }
+        #toggle-manual-upload-icon { font-size: 24px; font-weight: bold; color: var(--teal-glow); margin-left: 10px; }
+
+        /* --- Dialog Styles --- */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark-bg);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            padding: 5px;
+        }
+        .dialog-content {
+            width: 100%;
+            max-width: 420px; /* Match page container */
+            height: 100%;
+            max-height: 900px; /* Match page container */
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: var(--panel-bg);
+            flex-shrink: 0;
+        }
+        .dialog-back-btn {
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+        .dialog-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+        .dialog-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        #dialog-qr-image {
+            max-width: 250px;
+            width: 80%;
+            height: auto;
+            border-radius: 12px;
+            border: 4px solid var(--teal-glow);
+            padding: 8px;
+            background-color: white;
+            margin-bottom: 25px;
+        }
+        #dialog-instruction-text {
+            color: var(--yellow);
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-left">
+                <a href="home.html" class="back-btn">←</a>
+                <span class="title">Add Cash</span>
+            </div>
+            <a href="deposit-history.html" class="header-btn">History</a>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="add-money-banner-container"><img id="add-money-banner-image" src="" alt="Promotional Banner"></div>
+            
+            <h3 id="select-amount-text" style="text-align: center; color: var(--text-light); margin-top: 20px;">Select amount</h3>
+
+            <div class="preset-amount-grid" id="add-money-presets">
+                <button class="preset-amount-btn" data-amount="100">100</button>
+                <button class="preset-amount-btn" data-amount="200">200</button>
+                <button class="preset-amount-btn" data-amount="500">500</button>
+                <button class="preset-amount-btn" data-amount="1000">1000</button>
+                <button class="preset-amount-btn" data-amount="2000">2000</button>
+                <button class="preset-amount-btn" data-amount="3000">3000</button>
+                <button class="preset-amount-btn" data-amount="5000">5000</button>
+                <button class="preset-amount-btn" data-amount="10000">10000</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="upi-amount-input">Amount</label>
+                <input type="number" id="upi-amount-input" placeholder="Enter amount to add">
+            </div>
+            <button id="upi-payment-btn" class="submit-btn">Add Money</button>
+            
+            <div id="toggle-manual-upload-container">
+                <span>Upload your UTR number.</span>
+                <span id="toggle-manual-upload-icon">+</span>
+            </div>
+
+            <div class="form-container" id="manual-upload-form">
+                <div class="form-group">
+                    <label for="deposit-amount-input">Amount</label>
+                    <input type="number" id="deposit-amount-input" placeholder="Enter or select an amount">
+                </div>
+                <hr style="border-color: var(--panel-bg); margin: 5px 0;">
+                <h3 style="text-align: center; color: var(--text-white); font-weight: 500;">Upload Proof of Payment</h3>
+                <div class="form-group">
+                    <label for="transaction-id-input">Transaction ID / UTR</label>
+                    <input type="text" id="transaction-id-input" placeholder="Enter transaction ID">
+                </div>
+                <div class="form-group">
+                    <label for="screenshot-file">Screenshot</label>
+                    <label for="screenshot-file" class="file-upload-btn">Choose Screenshot</label>
+                    <input type="file" id="screenshot-file" accept="image/*">
+                    <div class="file-name-display" id="file-name-display">No file chosen</div>
+                </div>
+                <button id="submit-deposit-request-btn" class="submit-btn">Submit Request</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Full Screen QR Code Dialog -->
+    <div id="qr-dialog" class="dialog-overlay">
+        <div class="dialog-content">
+            <header class="dialog-header">
+                <span class="dialog-back-btn">←</span>
+                <span class="dialog-title">Scan & Pay</span>
+            </header>
+            <div class="dialog-body">
+                <img id="dialog-qr-image" src="" alt="Scan to Pay">
+                <p id="dialog-instruction-text">
+                    Take a screenshot of this QR code and open your UPI app and payment
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
+
+        let loggedInUserKey = null;
+        let qrCodesByCategory = {};
+
+        // UI Elements
+        const addMoneyBanner = document.getElementById('add-money-banner-container');
+        const addMoneyBannerImage = document.getElementById('add-money-banner-image');
+        const presetsGrid = document.getElementById('add-money-presets');
+        
+        const manualUploadForm = document.getElementById('manual-upload-form');
+        const amountInput = document.getElementById('deposit-amount-input');
+        const transactionIdInput = document.getElementById('transaction-id-input');
+        const screenshotInput = document.getElementById('screenshot-file');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const submitBtn = document.getElementById('submit-deposit-request-btn');
+
+        const upiAmountInput = document.getElementById('upi-amount-input');
+        const upiPaymentBtn = document.getElementById('upi-payment-btn');
+        const toggleManualUploadBtn = document.getElementById('toggle-manual-upload-container');
+
+        // QR Dialog UI Elements
+        const qrDialog = document.getElementById('qr-dialog');
+        const dialogQrImage = document.getElementById('dialog-qr-image');
+        const dialogCloseBtn = document.querySelector('.dialog-back-btn');
+
+        function init() {
+            checkLoginStatus();
+            setupEventListeners();
+        }
+
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                setupFirebaseListeners();
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        function setupFirebaseListeners() {
+            database.ref('QRCodes').on('value', (snapshot) => {
+                qrCodesByCategory = {};
+                if (snapshot.exists()) {
+                    const allQRCodes = snapshot.val();
+                    for (const key in allQRCodes) {
+                        const qrData = allQRCodes[key];
+                        if (qrData.Category && qrData.imageUrl) {
+                            qrCodesByCategory[qrData.Category] = qrData.imageUrl;
+                        }
+                    }
+                }
+            });
+
+            database.ref('cimage').on('value', (s) => {
+                const url = s.val();
+                if (url) { addMoneyBannerImage.src = url; addMoneyBanner.style.display = 'block'; } 
+                else { addMoneyBanner.style.display = 'none'; }
+            });
+        }
+
+        function setupEventListeners() {
+            presetsGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('preset-amount-btn')) {
+                    const amount = e.target.dataset.amount;
+                    
+                    upiAmountInput.value = amount;
+                    amountInput.value = amount;
+
+                    document.querySelectorAll('.preset-amount-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    const qrUrl = qrCodesByCategory[amount];
+                    
+                    if (qrUrl) {
+                        dialogQrImage.src = qrUrl;
+                        qrDialog.style.display = 'flex';
+                    } else {
+                        alert(`Sorry, no payment method is available for ₹${amount}.`);
+                        console.warn(`No QR code found for amount: ${amount}`);
+                    }
+                }
+            });
+
+            dialogCloseBtn.addEventListener('click', () => {
+                qrDialog.style.display = 'none';
+            });
+
+            toggleManualUploadBtn.addEventListener('click', () => {
+                if (manualUploadForm.style.display === 'none' || manualUploadForm.style.display === '') {
+                    manualUploadForm.style.display = 'flex';
+                } else {
+                    manualUploadForm.style.display = 'none';
+                }
+            });
+
+            screenshotInput.addEventListener('change', () => {
+                fileNameDisplay.textContent = screenshotInput.files.length > 0 ? screenshotInput.files[0].name : 'No file chosen';
+            });
+
+            submitBtn.addEventListener('click', handleSubmitRequest);
+        }
+
+        async function handleSubmitRequest() {
+            if (!loggedInUserKey) {
+                alert("Please log in to submit a request.");
+                return;
+            }
+
+            const file = screenshotInput.files[0];
+            const amount = parseFloat(amountInput.value);
+            const txnid = transactionIdInput.value.trim();
+
+            if (isNaN(amount) || amount <= 0) { alert("Please enter a valid amount."); return; }
+            if (txnid === '') { alert("Please enter the Transaction ID / UTR."); return; }
+            if (!file) { alert("Please upload a screenshot of your payment."); return; }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const filePath = `deposits/${loggedInUserKey}_${Date.now()}_${file.name}`;
+                const storageRef = storage.ref(filePath);
+                const snapshot = await storageRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                
+                const depositData = {
+                    userId: loggedInUserKey,
+                    amount: amount,
+                    txnid: txnid,
+                    screenshotUrl: downloadURL,
+                    Status: 'pending',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                await database.ref('addmoney').push(depositData);
+                alert("Deposit request submitted successfully! It will be reviewed shortly.");
+                
+                amountInput.value = '';
+                transactionIdInput.value = '';
+                screenshotInput.value = '';
+                fileNameDisplay.textContent = 'No file chosen';
+                manualUploadForm.style.display = 'none';
+
+            } catch (error) {
+                console.error("Error submitting deposit request:", error);
+                alert("Submission failed. Please try again or contact support.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Request';
+            }
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teen Patti</title>
+    <style>
+        /* --- General Styles --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        :root {
+            --dark-red: #4d0000;
+            --gold: #FFD700;
+            --cyan-glow: #00ffff;
+            --green: #0a690a;
+            --black: #1a1a1a;
+            --text-light: #f0f0f0;
+        }
+
+        body {
+            background-color: #111;
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-light);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 450px;
+            height: 95vh;
+            max-height: 850px;
+            background: linear-gradient(to bottom, #2a0000, #1a0000);
+            border-radius: 20px;
+            animation: glowing-border 4s infinite linear;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes glowing-border {
+            0% { box-shadow: inset 0 0 0 6px var(--cyan-glow), 0 0 0 2px var(--gold), 0 0 25px rgba(0, 255, 255, 0.7); }
+            50% { box-shadow: inset 0 0 0 6px #00e0e0, 0 0 0 2px #fff700, 0 0 40px rgba(0, 255, 255, 1); }
+            100% { box-shadow: inset 0 0 0 6px var(--cyan-glow), 0 0 0 2px var(--gold), 0 0 25px rgba(0, 255, 255, 0.7); }
+        }
+
+        /* --- Header CSS --- */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid rgba(255, 215, 0, 0.3); margin-bottom: 10px; position: relative; z-index: 10; }
+        .profile-icon { width: 40px; height: 40px; background-color: var(--green); border-radius: 50%; border: 2px solid var(--text-light); display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .balance-box { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 215, 0, 0.5); border-radius: 20px; padding: 5px 8px 5px 12px; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .balance-icon { font-size: 16px; }
+        .add-money-icon { display: flex; align-items: center; justify-content: center; background-color: var(--green); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; }
+        .add-money-icon svg { width: 18px; height: 18px; fill: #fff; }
+        .withdraw-btn { background-color: var(--gold); color: var(--dark-red); border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; text-transform: uppercase; text-decoration: none; }
+
+        .game-table { margin-top: 10px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; position: relative; }
+        .player-area { text-align: center; }
+        .player-area h2 { margin: 0 0 5px 0; font-size: 20px; text-shadow: 2px 2px 4px #000; }
+        .card { width: 38px; height: 53px; position: relative; transform-style: preserve-3d; transition: transform 0.8s, margin 0.5s; }
+        .card-container { display: flex; justify-content: center; gap: -22px; perspective: 1000px; height: 55px; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 4px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+        .card-back { background-color: #b54c4c; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1)), repeating-linear-gradient(-45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1)); background-size: 8px 8px; border: 1px solid rgba(255, 215, 0, 0.4); }
+        .card-front { background-color: white; color: black; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 700; transform: rotateY(180deg); }
+        .card-front .rank { position: absolute; top: 3px; left: 3px; font-size: 9px; }
+        .card-front .suit { font-size: 16px; }
+        .card-front.red-suit { color: #D60000; }
+        .card-front.black-suit { color: #000; }
+
+        .center-area { display: flex; flex-direction: column; align-items: center; }
+        #timer { width: 55px; height: 55px; border: 3px solid var(--gold); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 700; margin-bottom: 5px; animation: pulse-timer 2s infinite; }
+        @keyframes pulse-timer { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
+
+        .betting-area-wrapper { width: 90%; margin: 10px auto; }
+        .main-bets { display: grid; grid-template-areas: "green green" "red black"; gap: 2px; width: 100%; }
+        .bet-zone { padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s; font-weight: 700; position: relative; border: 3px solid transparent; }
+        .bet-zone .chip-stack { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;}
+        .bet-zone.red, .bet-zone.black { min-height: 90px; display: flex; flex-direction: column; justify-content: center; }
+        .bet-zone:hover { transform: scale(1.05); }
+        .bet-zone.green { grid-area: green; background-color: var(--green); border-radius: 10px 10px 0 0; }
+        .bet-zone.red { grid-area: red; background-color: #c00; border-radius: 0 0 0 10px; }
+        .bet-zone.black { grid-area: black; background-color: #000; border-radius: 0 0 10px 0; }
+        .shimmer::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shimmer 4s infinite linear; z-index: 2; }
+        @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+        .bet-zone .bet-title, .bet-zone .bet-multiplier { position: relative; z-index: 3;}
+        .bet-zone .bet-title { font-size: 18px; text-transform: uppercase; }
+        .bet-zone .bet-multiplier { font-size: 14px; opacity: 0.8; }
+        .bet-total-display { position: absolute; bottom: 5px; left: 0; width: 100%; text-align: center; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, 0.7); text-shadow: 1px 1px 2px #000; z-index: 4; pointer-events: none; }
+        .secondary-bets-wrapper { margin-top: 5px; display: flex; flex-direction: column; gap: 5px; }
+        .secondary-bets-row { display: flex; justify-content: center; gap: 5px; }
+        .bet-zone.small-bet { flex: 1; padding: 8px 5px; font-size: 12px; background-color: #3a0000; border-radius: 8px; border: 2px solid #c55151; padding-bottom: 20px; }
+        .small-bet .bet-title { font-size: 13px; font-weight: 700; }
+        .small-bet .bet-multiplier { font-size: 11px; }
+
+        .demo-player { position: absolute; z-index: 5; text-align: center; }
+        .demo-player img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #aaa; transition: transform 0.2s; }
+        .demo-player.is-betting img { animation: shake 0.5s; }
+        .demo-player .balance { font-size: 11px; background: rgba(0,0,0,0.6); padding: 1px 4px; border-radius: 4px; margin-top: 2px; }
+        #player1 { top: 25%; left: 0px; } 
+        #player2 { top: 35%; left: 0px; } 
+        #player3 { top: 45%; left: 0px; } 
+        #player4 { top: 55%; left: 0px; } 
+        #player5 { top: 25%; right: 0px; } 
+        #player6 { top: 35%; right: 0px; }
+        #player7 { top: 45%; right: 0px; }
+        #player8 { top: 55%; right: 0px; }
+        
+        .status-history-bar { display: flex; justify-content: center; margin-top: 8px; }
+        .history-items { display: flex; gap: 4px; padding: 4px 8px; background: rgba(0,0,0,0.2); border-radius: 20px; }
+        .history-item { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+        .history-item.red { background: #c00; } .history-item.black { background: #1a1a1a; border: 1px solid #555; } .history-item.green { background: var(--green); }
+        .bottom-bar { margin-top: auto; display: flex; justify-content: flex-end; align-items: flex-end; padding-top: 10px; }
+        .coins { display: flex; gap: 5px; align-items: flex-end; }
+        .coin { width: 40px; height: 40px; border-radius: 50%; background-color: var(--gold); display: flex; justify-content: center; align-items: center; font-weight: 700; color: var(--dark-red); cursor: pointer; border: 3px solid #b8860b; box-shadow: 0 4px 0 #8c6400; transition: all 0.2s ease-out; }
+        .coin.selected { width: 50px; height: 50px; transform: translateY(-5px); box-shadow: 0 6px 0 #8c6400; }
+        .winner-glow { animation: burning-border 4s forwards; }
+        @keyframes burning-border { 0% { border-color: transparent; box-shadow: 0 0 0px var(--gold); } 50% { border-color: var(--gold); box-shadow: 0 0 25px var(--gold), inset 0 0 15px rgba(255, 215, 0, 0.5); } 100% { border-color: transparent; box-shadow: 0 0 0px var(--gold); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+        .flying-coin { position: absolute; width: 25px; height: 25px; background-color: var(--gold); border-radius: 50%; z-index: 110; transition: transform 0.6s cubic-bezier(0.5, -0.4, 0.8, 1), opacity 0.6s; border: 2px solid #b8860b; display: flex; justify-content: center; align-items: center; font-size: 10px; color: var(--dark-red); font-weight: 700; pointer-events: none; }
+        .chip { position: absolute; width: 25px; height: 25px; background-color: var(--gold); border-radius: 50%; border: 2px solid #b8860b; box-shadow: 0 1px 2px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; font-size: 10px; color: var(--dark-red); font-weight: 700; transform: scale(0); opacity: 0; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s; }
+        .chip.visible { transform: scale(1); opacity: 1; }
+        .message-popup { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.85); color: var(--text-light); padding: 15px 30px; border-radius: 15px; font-size: 20px; font-weight: 600; z-index: 100; animation: fade-in-out 3s forwards; text-align: center; border: 2px solid rgba(255, 215, 0, 0.5); text-shadow: 1px 1px 3px #000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .message-popup.win { color: var(--gold); font-size: 26px; font-weight: 700; border-color: var(--gold); background: linear-gradient(45deg, rgba(10, 105, 10, 0.8), rgba(0, 50, 0, 0.9)); }
+        .message-popup.info { border-color: #555; }
+        @keyframes fade-in-out { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
+        .win-toast { position: absolute; bottom: 80px; left: 15px; background: linear-gradient(45deg, #0a690a, #1a8a1a); color: var(--gold); padding: 10px 20px; border-radius: 10px; border: 2px solid var(--gold); font-size: 18px; font-weight: 700; z-index: 200; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4); animation: slide-in-out-left 4s forwards; }
+        @keyframes slide-in-out-left { 0% { transform: translateX(-120%); opacity: 0; } 15% { transform: translateX(0); opacity: 1; } 85% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(-120%); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="game-container-main">
+        <div class="top-bar">
+            <div class="profile-icon" id="main-user-profile">👤</div>
+            <div class="balance-box">
+                <span class="balance-icon">💰</span> 
+                <span id="user-balance">0.00</span>
+                <a href="addmoney.html" class="add-money-icon" title="Add Cash">
+                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
+                </a>
+            </div>
+            <a href="withdraw.html" class="withdraw-btn">Withdraw</a>
+        </div>
+
+        <div class="demo-player" id="player1" data-id="player1"><img src="https://i.pravatar.cc/50?img=1" alt="player"><div class="balance" data-balance="1250">1250</div></div>
+        <div class="demo-player" id="player2" data-id="player2"><img src="https://i.pravatar.cc/50?img=2" alt="player"><div class="balance" data-balance="950">950</div></div>
+        <div class="demo-player" id="player3" data-id="player3"><img src="https://i.pravatar.cc/50?img=3" alt="player"><div class="balance" data-balance="800">800</div></div>
+        <div class="demo-player" id="player4" data-id="player4"><img src="https://i.pravatar.cc/50?img=4" alt="player"><div class="balance" data-balance="2100">2100</div></div>
+        <div class="demo-player" id="player5" data-id="player5"><img src="https://i.pravatar.cc/50?img=5" alt="player"><div class="balance" data-balance="3000">3000</div></div>
+        <div class="demo-player" id="player6" data-id="player6"><img src="https://i.pravatar.cc/50?img=6" alt="player"><div class="balance" data-balance="1500">1500</div></div>
+        <div class="demo-player" id="player7" data-id="player7"><img src="https://i.pravatar.cc/50?img=7" alt="player"><div class="balance" data-balance="1800">1800</div></div>
+        <div class="demo-player" id="player8" data-id="player8"><img src="https://i.pravatar.cc/50?img=8" alt="player"><div class="balance" data-balance="2500">2500</div></div>
+        
+        <div class="game-table"><div class="player-area" id="playerA-area"><h2>Dragon</h2><div class="card-container" id="playerA-cards"></div></div><div class="center-area"><div id="timer">10</div></div><div class="player-area" id="playerB-area"><h2>Tiger</h2><div class="card-container" id="playerB-cards"></div></div></div>
+        <div class="betting-area-wrapper"><div class="main-bets"><div class="bet-zone green shimmer" data-bet-type="green"><div class="chip-stack"></div><div class="bet-title">Tie</div><div class="bet-multiplier">8x</div><div class="bet-total-display">0</div></div><div class="bet-zone red shimmer" data-bet-type="red"><div class="chip-stack"></div><div class="bet-title">Dragon</div><div class="bet-multiplier">2x</div><div class="bet-total-display">0</div></div><div class="bet-zone black shimmer" data-bet-type="black"><div class="chip-stack"></div><div class="bet-title">Tiger</div><div class="bet-multiplier">2x</div><div class="bet-total-display">0</div></div></div><div class="secondary-bets-wrapper"><div class="secondary-bets-row"><div class="bet-zone small-bet" data-bet-type="color"><div class="chip-stack"></div><div class="bet-title">Color</div><div class="bet-multiplier">3x</div><div class="bet-total-display">0</div></div><div class="bet-zone small-bet" data-bet-type="pair"><div class="chip-stack"></div><div class="bet-title">Pair</div><div class="bet-multiplier">2x</div><div class="bet-total-display">0</div></div><div class="bet-zone small-bet" data-bet-type="run"><div class="chip-stack"></div><div class="bet-title">Run</div><div class="bet-multiplier">5x</div><div class="bet-total-display">0</div></div></div><div class="secondary-bets-row"><div class="bet-zone small-bet" data-bet-type="run_color"><div class="chip-stack"></div><div class="bet-title">Run+Color</div><div class="bet-multiplier">6x</div><div class="bet-total-display">0</div></div><div class="bet-zone small-bet" data-bet-type="trail"><div class="chip-stack"></div><div class="bet-title">Trio</div><div class="bet-multiplier">10x</div><div class="bet-total-display">0</div></div></div></div></div>
+        <div class="status-history-bar"><div class="history-items" id="history-items-container"></div></div>
+        <div class="bottom-bar"><div class="coins"><div class="coin selected" data-value="10">10</div><div class="coin" data-value="50">50</div><div class="coin" data-value="100">100</div><div class="coin" data-value="500">500</div><div class="coin" data-value="1000">1K</div></div></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc", authDomain: "spin-199a1.firebaseapp.com", databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app", projectId: "spin-199a1", storageBucket: "spin-199a1.appspot.com", };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameContainer = document.getElementById('game-container-main');
+            const userBalanceEl = document.getElementById('user-balance');
+            const mainUserProfile = document.getElementById('main-user-profile');
+            const timerEl = document.getElementById('timer');
+            const playerACardsEl = document.getElementById('playerA-cards');
+            const playerBCardsEl = document.getElementById('playerB-cards');
+            const betZones = document.querySelectorAll('.bet-zone');
+            const coins = document.querySelectorAll('.coin');
+            const demoPlayers = document.querySelectorAll('.demo-player');
+            const historyContainer = document.getElementById('history-items-container');
+            let loggedInUserKey = null, userBalance = 0, selectedCoinValue = 10, isBettingTime = true, mainTimerId, demoBetTimerId, bets = {}, mainBetPlacedOn = null, gameHistory = [];
+            const suits = ['♠', '♥', '♦', '♣'], ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'], rankValues = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14 }, secondaryBetMultipliers = { color: 3, pair: 2, run: 5, run_color: 6, trail: 10 };
+            function checkLoginStatus() { loggedInUserKey = sessionStorage.getItem('loggedInUserKey'); if (loggedInUserKey) { loadUserData(loggedInUserKey); } else { alert("Please log in to play."); window.location.href = 'index.html'; } }
+            function loadUserData(userKey) { const userRef = database.ref('customers/' + userKey); userRef.on('value', (snapshot) => { if (snapshot.exists()) { userBalance = snapshot.val().balance || 0; updateBalanceUI(); } else { alert("User data not found. Logging out."); window.location.href = 'index.html'; } }); }
+            function updateBalanceUI() { userBalanceEl.textContent = parseFloat(userBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+            const getSuitColor = (suit) => (suit === '♥' || suit === '♦') ? 'red-suit' : 'black-suit';
+            const createDeck = () => suits.flatMap(suit => ranks.map(rank => ({ suit, rank })));
+            const shuffleDeck = (deck) => { for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; } };
+            function selectCoin(e) { coins.forEach(c => c.classList.remove('selected')); e.currentTarget.classList.add('selected'); selectedCoinValue = parseInt(e.currentTarget.dataset.value); }
+            function getTotalBetAmount(betType) { return bets[betType] ? Object.values(bets[betType]).reduce((sum, amount) => sum + amount, 0) : 0; }
+            function updateAllBetDisplays() { betZones.forEach(zone => { const betType = zone.dataset.betType, totalDisplay = zone.querySelector('.bet-total-display'); if (totalDisplay) { const totalBetAmount = getTotalBetAmount(betType); totalDisplay.textContent = totalBetAmount > 0 ? totalBetAmount.toLocaleString() : '0'; } }); }
+            function placeBet(e) { if (!isBettingTime) { showMessage("Betting time is over!", 'info'); return; } if (!loggedInUserKey) { alert("Login error, please refresh."); return; } const betZone = e.currentTarget, betType = betZone.dataset.betType, isMainBet = ['red', 'black', 'green'].includes(betType); if (isMainBet && mainBetPlacedOn && mainBetPlacedOn !== betType) { showMessage("You can only bet on one main outcome.", 'info'); return; } if (userBalance < selectedCoinValue) { showMessage("Insufficient balance!", 'info'); return; } database.ref('customers/' + loggedInUserKey + '/balance').transaction((currentBalance) => { if (currentBalance >= selectedCoinValue) { return currentBalance - selectedCoinValue; } return; }).then(result => { if (result.committed) { animateAndPlaceCoin(mainUserProfile, betZone, selectedCoinValue); if (isMainBet) { mainBetPlacedOn = betType; } bets[betType] = bets[betType] || {}; bets[betType]['user'] = (bets[betType]['user'] || 0) + selectedCoinValue; updateAllBetDisplays(); } else { showMessage("Insufficient balance!", 'info'); } }).catch(error => { console.error("Bet placement failed:", error); showMessage("An error occurred. Try again.", "info"); }); }
+            function startRound() { resetBoard(); isBettingTime = true; let timeLeft = 10; timerEl.textContent = timeLeft; timerEl.style.color = 'var(--gold)'; mainTimerId = setInterval(() => { timeLeft--; timerEl.textContent = timeLeft; if (timeLeft <= 3) timerEl.style.color = '#ff4d4d'; if (timeLeft <= 0) endBetting(); }, 1000); demoBetTimerId = setInterval(triggerDemoBet, 100); }
+            function endBetting() { clearInterval(mainTimerId); clearInterval(demoBetTimerId); isBettingTime = false; timerEl.textContent = 'Stop'; showMessage("Betting closed!", 'info'); setTimeout(dealAndRevealCards, 1000); }
+            
+            function triggerDemoBet() {
+                if (!isBettingTime || demoPlayers.length === 0) return;
+                const randomPlayer = demoPlayers[Math.floor(Math.random() * demoPlayers.length)];
+                const bettableZones = document.querySelectorAll('.bet-zone');
+                const targetZone = bettableZones[Math.floor(Math.random() * bettableZones.length)];
+                if (!targetZone) return;
+                const betType = targetZone.dataset.betType;
+                const playerId = randomPlayer.dataset.id;
+                const betAmount = [100, 500, 1000, 2000, 5000][Math.floor(Math.random() * 5)];
+                randomPlayer.classList.add('is-betting');
+                setTimeout(() => randomPlayer.classList.remove('is-betting'), 500);
+                animateAndPlaceCoin(randomPlayer, targetZone, betAmount);
+                bets[betType] = bets[betType] || {};
+                bets[betType][playerId] = (bets[betType][playerId] || 0) + betAmount;
+                updateAllBetDisplays();
+            }
+
+            function dealAndRevealCards() {
+                const userDragonBet = (bets['red'] && bets['red']['user']) ? bets['red']['user'] : 0;
+                const userTigerBet = (bets['black'] && bets['black']['user']) ? bets['black']['user'] : 0;
+                const userTieBet = (bets['green'] && bets['green']['user']) ? bets['green']['user'] : 0;
+                let targetWinner;
+                const userBetOptions = [
+                    { type: 'red', amount: userDragonBet },
+                    { type: 'black', amount: userTigerBet },
+                    { type: 'green', amount: userTieBet }
+                ];
+                userBetOptions.sort((a, b) => a.amount - b.amount);
+                const lowestBetAmount = userBetOptions[0].amount;
+                const possibleWinners = userBetOptions.filter(option => option.amount === lowestBetAmount);
+                let finalPossibleWinners = possibleWinners.filter(p => p.type !== 'green');
+                if (finalPossibleWinners.length === 0) {
+                    finalPossibleWinners = possibleWinners;
+                }
+                targetWinner = finalPossibleWinners[Math.floor(Math.random() * finalPossibleWinners.length)].type;
+                const { handA, handB } = generateWinningHands(targetWinner);
+                displayCards(handA, playerACardsEl);
+                displayCards(handB, playerBCardsEl);
+                setTimeout(() => flipAllCards(handA, handB), 500);
+            }
+            
+            function generateWinningHands(winner) { let handA, handB, resultA, resultB, currentWinner; let attempts = 0; do { const deck = createDeck(); shuffleDeck(deck); handA = [deck.pop(), deck.pop(), deck.pop()]; handB = [deck.pop(), deck.pop(), deck.pop()]; resultA = evaluateHand(handA); resultB = evaluateHand(handB); if (resultA.rank > resultB.rank) currentWinner = 'red'; else if (resultB.rank > resultA.rank) currentWinner = 'black'; else { let highCardWinnerFound = false; for (let i = 0; i < 3; i++) { if (rankValues[handA[i].rank] > rankValues[handB[i].rank]) { currentWinner = 'red'; highCardWinnerFound = true; break; } if (rankValues[handB[i].rank] > rankValues[handA[i].rank]) { currentWinner = 'black'; highCardWinnerFound = true; break; } } if (!highCardWinnerFound) currentWinner = 'green'; } attempts++; } while (currentWinner !== winner && attempts < 50); return { handA, handB }; }
+            function displayCards(hand, element) { element.innerHTML = ''; hand.forEach((cardData, index) => { const card = document.createElement('div'); card.className = 'card'; card.innerHTML = `<div class="card-face card-back"></div><div class="card-face card-front ${getSuitColor(cardData.suit)}"><span class="rank">${cardData.rank}</span><span class="suit">${cardData.suit}</span></div>`; card.style.transitionDelay = `${index * 200}ms`; element.appendChild(card); }); }
+            function flipAllCards(handA, handB) { document.querySelectorAll('.card').forEach(card => card.classList.add('flipped')); setTimeout(() => determineWinner(handA, handB), 1500); }
+            function evaluateHand(hand) { hand.sort((a, b) => rankValues[b.rank] - rankValues[a.rank]); const values = hand.map(c => rankValues[c.rank]), suits = hand.map(c => c.suit); const isFlush = new Set(suits).size === 1, isStraight = (values[0] - values[1] === 1 && values[1] - values[2] === 1) || (values[0] === 14 && values[1] === 3 && values[2] === 2); const isTrio = values[0] === values[1] && values[1] === values[2], isPair = values[0] === values[1] || values[1] === values[2]; if (isStraight && isFlush) return { rank: 5, name: "Run+Color" }; if (isTrio) return { rank: 4, name: "Trio" }; if (isStraight) return { rank: 3, name: "Run" }; if (isFlush) return { rank: 2, name: "Color" }; if (isPair) return { rank: 1, name: "Pair" }; return { rank: 0, name: "High Card", hand: hand }; }
+            function determineWinner(handA, handB) { const resultA = evaluateHand(handA), resultB = evaluateHand(handB); let mainWinner = '', winningText = ''; if (resultA.rank > resultB.rank) { mainWinner = 'red'; winningText = `Dragon wins! (${resultA.name})`; } else if (resultB.rank > resultA.rank) { mainWinner = 'black'; winningText = `Tiger wins! (${resultB.name})`; } else { for (let i = 0; i < 3; i++) { if (rankValues[handA[i].rank] > rankValues[handB[i].rank]) { mainWinner = 'red'; winningText = `Dragon wins! (High Card)`; break; } if (rankValues[handB[i].rank] > rankValues[handA[i].rank]) { mainWinner = 'black'; winningText = `Tiger wins! (High Card)`; break; } } if (mainWinner === '') { mainWinner = 'green'; winningText = "It's a Tie!"; } } let highestSecondaryHand = null; if (resultA.rank > 0 || resultB.rank > 0) { highestSecondaryHand = resultA.rank >= resultB.rank ? resultA : resultB; } updateHistory(mainWinner); showMessage(winningText, 'win'); highlightWinners(mainWinner, highestSecondaryHand); calculateWinnings(mainWinner, highestSecondaryHand); setTimeout(startRound, 5000); }
+            function highlightWinners(mainWinnerType, highestSecondaryHand) { document.querySelector(`.bet-zone[data-bet-type="${mainWinnerType}"]`)?.classList.add('winner-glow'); const handTypeMap = { "Pair": "pair", "Color": "color", "Run": "run", "Trio": "trail", "Run+Color": "run_color" }; if (highestSecondaryHand && highestSecondaryHand.rank > 0) { const betType = handTypeMap[highestSecondaryHand.name]; if (betType) { document.querySelector(`.bet-zone[data-bet-type="${betType}"]`)?.classList.add('winner-glow'); } } }
+            function calculateWinnings(mainWinnerType, highestSecondaryHand) { let totalUserWinnings = 0; const userBets = bets; if (userBets[mainWinnerType] && userBets[mainWinnerType]['user']) { const multiplier = { red: 2, black: 2, green: 8 }[mainWinnerType] || 0; totalUserWinnings += userBets[mainWinnerType]['user'] * multiplier; } const handTypeMap = { "Pair": "pair", "Color": "color", "Run": "run", "Trio": "trail", "Run+Color": "run_color" }; if (highestSecondaryHand && highestSecondaryHand.rank > 0) { const betType = handTypeMap[highestSecondaryHand.name]; if (betType && userBets[betType] && userBets[betType]['user']) { totalUserWinnings += userBets[betType]['user'] * secondaryBetMultipliers[betType]; } } if (totalUserWinnings > 0) { database.ref('customers/' + loggedInUserKey + '/balance').transaction(currentBalance => (currentBalance || 0) + totalUserWinnings).then(() => { setTimeout(() => { showWinToast(Math.round(totalUserWinnings)); }, 800); }); } const payout = (betters, winnerZoneEl) => { if(!winnerZoneEl || !betters) return; const chipsOnBoard = Array.from(winnerZoneEl.querySelectorAll('.chip')); for (const playerId in betters) { const targetEl = (playerId === 'user') ? mainUserProfile : document.getElementById(playerId); if (targetEl) { chipsOnBoard.forEach(chip => animateChipPayout(chip, targetEl)); } } }; payout(bets[mainWinnerType], document.querySelector(`.bet-zone[data-bet-type="${mainWinnerType}"]`)); if (highestSecondaryHand && highestSecondaryHand.rank > 0) { const betType = handTypeMap[highestSecondaryHand.name]; if (betType && bets[betType]) { payout(bets[betType], document.querySelector(`.bet-zone[data-bet-type="${betType}"]`)); } } }
+            function animateChipPayout(chip, toEl) { const startRect = chip.getBoundingClientRect(), endRect = toEl.getBoundingClientRect(), containerRect = gameContainer.getBoundingClientRect(); const startX = startRect.left - containerRect.left, startY = startRect.top - containerRect.top; const endX = endRect.left + (endRect.width / 2) - containerRect.left, endY = endRect.top + (endRect.height / 2) - containerRect.top; chip.style.zIndex = 120; chip.style.transition = 'transform 0.7s cubic-bezier(0.5, 0, 1, 1), opacity 0.7s'; requestAnimationFrame(() => { chip.style.transform = `translate(${endX - startX}px, ${endY - startY}px) scale(0.5)`; chip.style.opacity = '0'; }); setTimeout(() => chip.remove(), 700); }
+            function animateAndPlaceCoin(fromEl, toEl, amount) { const startRect = fromEl.getBoundingClientRect(), toRect = toEl.getBoundingClientRect(), containerRect = gameContainer.getBoundingClientRect(), flyingCoin = document.createElement('div'); flyingCoin.className = 'flying-coin'; flyingCoin.textContent = amount >= 1000 ? `${amount/1000}K` : amount; gameContainer.appendChild(flyingCoin); const startX = startRect.left + (startRect.width / 2) - containerRect.left - (flyingCoin.offsetWidth / 2), startY = startRect.top + (startRect.height / 2) - containerRect.top - (flyingCoin.offsetHeight / 2); flyingCoin.style.transform = `translate(${startX}px, ${startY}px) scale(1)`; const toX = toRect.left + toRect.width * (0.15 + Math.random() * 0.7) - flyingCoin.offsetWidth / 2 - containerRect.left, toY = toRect.top + toRect.height * (0.15 + Math.random() * 0.7) - flyingCoin.offsetHeight / 2 - containerRect.top; requestAnimationFrame(() => { flyingCoin.style.transform = `translate(${toX}px, ${toY}px) scale(1) rotateZ(720deg)`; }); setTimeout(() => { flyingCoin.remove(); addChipToBoard(toEl, amount, toX, toY); }, 600); }
+            function addChipToBoard(betZone, value, x, y) { const chipStack = betZone.querySelector('.chip-stack'), chip = document.createElement('div'); chip.className = 'chip'; chip.textContent = value >= 1000 ? `${value / 1000}K` : value; chip.style.left = `${x - betZone.getBoundingClientRect().left}px`; chip.style.top = `${y - betZone.getBoundingClientRect().top}px`; chipStack.appendChild(chip); setTimeout(() => chip.classList.add('visible'), 10); }
+            function updateHistory(result) { gameHistory.push(result); if (gameHistory.length > 12) { gameHistory.shift(); } historyContainer.innerHTML = ''; gameHistory.forEach(item => { const historyDot = document.createElement('div'); historyDot.className = `history-item ${item}`; historyDot.textContent = item.charAt(0).toUpperCase(); historyContainer.appendChild(historyDot); }); }
+            function resetBoard() { bets = {}; mainBetPlacedOn = null; isBettingTime = true; playerACardsEl.innerHTML = ''; playerBCardsEl.innerHTML = ''; document.querySelectorAll('.chip').forEach(c => c.remove()); betZones.forEach(zone => zone.classList.remove('winner-glow')); updateAllBetDisplays(); for(let i=0; i<3; i++) { const backCardHTML = `<div class="card"><div class="card-face card-back"></div></div>`; playerACardsEl.innerHTML += backCardHTML; playerBCardsEl.innerHTML += backCardHTML; } }
+            function showMessage(msg, type = 'info') { const existingPopup = document.querySelector('.message-popup'); if(existingPopup) existingPopup.remove(); const popup = document.createElement('div'); popup.className = `message-popup ${type}`; popup.textContent = msg; gameContainer.appendChild(popup); setTimeout(() => { popup.remove(); }, 3000); }
+            function showWinToast(amount) { const existingToast = document.querySelector('.win-toast'); if(existingToast) existingToast.remove(); const toast = document.createElement('div'); toast.className = 'win-toast'; toast.innerHTML = `💰 +${amount.toLocaleString()}`; gameContainer.appendChild(toast); setTimeout(() => { toast.remove() }, 4000); }
+            coins.forEach(coin => coin.addEventListener('click', selectCoin));
+            betZones.forEach(zone => zone.addEventListener('click', placeBet));
+            checkLoginStatus();
+            startRound();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Lobby</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root { --dark-bg: #0f1923; --panel-bg: #213743; --green: #28a745; --red: #e74c3c; --orange: #ff8c00; --yellow: #ffc107; --text-light: #c1d5e0; --text-white: #ffffff; --teal-glow: #00b8a9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; } /* Scrolling disabled */
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #100505;
+            color: var(--text-light); 
+            display: flex; 
+            justify-content: center; 
+        }
+
+        .game-container { 
+            width: 100%; 
+            max-width: 420px; 
+            height: 100%; 
+            max-height: 900px; 
+            background: radial-gradient(ellipse at center, #4D1A20 0%, #100505 100%);
+            overflow: hidden; /* Scrolling disabled for the container */
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* --- Header CSS --- */
+        .top-bar { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: var(--panel-bg); }
+        .profile-icon img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); display: block; }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 16px; position: relative; background-color: #0c1218; padding: 5px 12px; border-radius: 20px; }
+        .balance .balance-amount { color: var(--yellow); }
+        .balance .add-balance-icon { background-color: var(--green); color: var(--text-white); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; justify-content: center; align-items: center; text-decoration: none; font-weight: 700; margin-left: 8px; font-size: 18px; }
+        .top-icons { display: flex; align-items:center; gap: 15px; }
+        .top-icons a { color: var(--text-light); text-decoration: none; font-size: 24px; }
+        
+        .game-content { 
+            padding: 8px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            flex-grow: 1; 
+            justify-content: space-around; /* Distributes content evenly */
+        }
+        
+        /* --- User Display Area (Small) --- */
+        .users-display-area {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 5px;
+        }
+        .demo-user { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .demo-user img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid var(--panel-bg);
+            transition: all 0.2s ease;
+        }
+        .demo-user.is-betting img { border-color: var(--yellow); transform: scale(1.1); box-shadow: 0 0 8px var(--yellow); }
+        .demo-user .uid { font-size: 9px; color: var(--text-light); background-color: var(--dark-bg); padding: 1px 4px; border-radius: 4px; }
+
+        /* --- Game Board (Height Reduced) --- */
+        @keyframes rotate-border { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .game-board-wrapper {
+            width: 100%;
+            max-width: 290px;
+            aspect-ratio: 1 / 1;
+            padding: 6px;
+            background-color: var(--panel-bg);
+            border-radius: 15px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--yellow);
+        }
+        .game-board-wrapper::before {
+            content: ''; position: absolute; z-index: -1; top: -5px; left: -5px; right: -5px; bottom: -5px;
+            background: conic-gradient(from 0deg, #ff00ea, #ff0080, #ff0000, #ff8c00, #ffff00, #00ff00, #00ffff, #008cff, #8b00ff, #c300ff, #ff00ea);
+            border-radius: inherit; animation: rotate-border 4s linear infinite;
+        }
+        .game-board { position: relative; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); gap: 3px; }
+        .center-area { grid-column: 2 / 6; grid-row: 2 / 5; background-color: rgba(15, 25, 35, 0.7); border-radius: 10px; display: flex; justify-content: center; align-items: center; flex-direction: column; border: 1px dashed var(--teal-glow); }
+        .center-area #timer-display { font-size: 3.5rem; font-weight: 700; color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+        .ring-card { background-color: var(--dark-bg); border: 1px solid #3a506b; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; transition: all 0.1s ease; }
+        .ring-card.highlight { border-color: var(--yellow); box-shadow: 0 0 8px var(--yellow); transform: scale(1.1); }
+        .ring-card.winner { border-color: var(--green); box-shadow: 0 0 12px 2px var(--green); animation: pulse-winner 1s infinite; }
+        @keyframes pulse-winner { 0% { box-shadow: 0 0 12px 2px var(--green); } 50% { box-shadow: 0 0 20px 6px #39d35c; } 100% { box-shadow: 0 0 12px 2px var(--green); } }
+
+        /* --- Betting Area & Controls --- */
+        .betting-area { width: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 0 5px; }
+        .bet-card { background-color: var(--panel-bg); border-radius: 8px; border: 2px solid transparent; text-align: center; padding: 6px 4px; cursor: pointer; transition: all 0.2s ease; position: relative; }
+        .bet-card:hover { border-color: var(--teal-glow); }
+        .bet-card .icon { font-size: 1.6rem; line-height: 1; }
+        .bet-card .multiplier { font-size: 0.7rem; font-weight: bold; color: var(--yellow); }
+        .bet-card .bet-amount-on-card { position: absolute; bottom: -5px; right: -5px; background-color: var(--orange); color: var(--text-white); font-size: 0.7rem; font-weight: bold; min-width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 2px; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        .bet-card.winner { border: 3px solid var(--green); box-shadow: 0 0 10px var(--green); }
+        
+        .bet-controls { display: flex; justify-content: center; align-items: flex-end; gap: 12px; height: 55px; }
+        .coin-btn { background: radial-gradient(circle, #ffeb3b, #ffc107); border: 2px solid #b7890c; border-radius: 50%; color: #6e4600; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease-in-out; box-shadow: 0 3px 4px rgba(0,0,0,0.4); }
+        .coin-btn span { font-size: 1.1em; }
+        .coin-btn.active { transform: translateY(-8px) scale(1.1); box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
+        
+        #winnings-popup { position: fixed; top: 60px; left: 50%; transform: translate(-50%, -200%); background: linear-gradient(to right, var(--green), var(--teal-glow)); color: var(--text-white); padding: 10px 20px; border-radius: 20px; z-index: 1000; text-align: center; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 200, 150, 0.4); transition: transform 0.4s ease-out; pointer-events: none; }
+        #winnings-popup.show { transform: translate(-50%, 0); }
+
+        .animated-coin { position: absolute; z-index: 999; font-size: 16px; transition: all 0.6s cubic-bezier(0.3, 0, 0.8, 0.5); pointer-events: none; }
+        
+        .server-down-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 25, 35, 0.98);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-white);
+            text-align: center;
+            padding: 20px;
+        }
+        .server-down-overlay.show {
+            display: flex;
+            animation: zoomOut 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        }
+        .server-down-content h2 { font-size: 24px; color: var(--yellow); margin-bottom: 15px; }
+        .server-down-content p { font-size: 16px; color: var(--text-light); line-height: 1.5; }
+        @keyframes zoomOut {
+            from { transform: scale(1.3); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <header class="top-bar">
+            <a href="profile.html" class="profile-icon"><img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P"></a>
+            <div class="balance">
+                <span id="balance-amount" class="balance-amount">₹ 0.00</span>
+                <a href="addmoney.html" class="add-balance-icon">+</a>
+            </div>
+            <div class="top-icons">
+                <a href="notification.html">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                </a>
+                <a href="Menu.html" class="icon-menu">☰</a>
+            </div>
+        </header>
+        
+        <main class="game-content">
+            <div class="users-display-area" id="users-display-area"></div>
+
+            <div class="game-board-wrapper">
+                <div class="game-board" id="game-board">
+                    <div class="center-area">
+                        <div id="timer-display">10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="betting-area" id="betting-area"></div>
+            <div class="bet-controls" id="bet-controls"></div>
+        </main>
+    </div>
+    
+    <div id="winnings-popup">You win! <span id="winnings-amount"></span></div>
+    
+    <div id="server-down-overlay" class="server-down-overlay">
+        <div class="server-down-content">
+            <h2>The server is under maintenance.</h2>
+            <p>We apologize for the inconvenience. We will be back soon.</p>
+        </div>
+    </div>
+
+    <audio id="background-sound" src="https://cdn.pixabay.com/download/audio/2022/11/17/audio_821cd95a82.mp3?filename=background-music-for-short-video-126259.mp3" loop></audio>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        let balance = 0.00; 
+        let loggedInUserKey = null;
+
+        const balanceEl = document.getElementById('balance-amount');
+        const profileMainImgEl = document.getElementById('profile-main-img');
+        const winningsPopupEl = document.getElementById('winnings-popup');
+        const winningsAmountEl = document.getElementById('winnings-amount');
+        const backgroundSound = document.getElementById('background-sound');
+        const serverDownOverlay = document.getElementById('server-down-overlay');
+        
+        const game = {
+            items: [ { id: 'plane', icon: '✈️', multiplier: 1 }, { id: 'car', icon: '🚗', multiplier: 2 }, { id: 'bike', icon: '🏍️', multiplier: 3 }, { id: 'watch', icon: '⌚', multiplier: 4 }, { id: 'fish', icon: '🐟', multiplier: 5 }, { id: 'money', icon: '💵', multiplier: 6 }, { id: 'rose', icon: '🌹', multiplier: 7 }, { id: 'star', icon: '⭐', multiplier: 8 }, { id: 'eagle', icon: '🦅', multiplier: 9 }, { id: 'peacock', icon: '🦚', multiplier: 10 } ],
+            coinValues: [10, 20, 50, 100, 500],
+            winChances: { 'plane': 4, 'car': 5, 'bike': 4, 'watch': 6, 'fish': 7, 'money': 9, 'rose': 10, 'star': 12, 'eagle': 15, 'peacock': 20 },
+            state: { isBettingPhase: false, selectedCoinValue: 10, bets: {}, demoBets: {}, totalBetAmount: 0, roundCounters: {}, countdownInterval: null },
+            elements: { board: document.getElementById('game-board'), bettingArea: document.getElementById('betting-area'), controls: document.getElementById('bet-controls'), timerDisplay: document.getElementById('timer-display') },
+            ringCardElements: [],
+
+            init() {
+                this.items.forEach(item => { this.state.roundCounters[item.id] = 0; this.state.demoBets[item.id] = 0; });
+                this.buildRing();
+                this.buildBettingArea(); 
+                this.buildControls(); 
+                demo.init();
+                this.startNewRound();
+            },
+            buildRing() {
+                const positions = [ ...Array.from({length: 6}, (_, i) => ({r: 1, c: i + 1})), ...Array.from({length: 3}, (_, i) => ({r: i + 2, c: 6})), ...Array.from({length: 6}, (_, i) => ({r: 5, c: 6 - i})), ...Array.from({length: 3}, (_, i) => ({r: 4 - i, c: 1})), ];
+                const ringItems = [...this.items, ...this.items.slice(0, 8)];
+                this.ringCardElements = positions.map((pos, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'ring-card';
+                    card.style.gridRow = pos.r; card.style.gridColumn = pos.c;
+                    card.innerHTML = ringItems[index].icon; card.dataset.id = ringItems[index].id;
+                    this.elements.board.insertBefore(card, this.elements.board.firstChild);
+                    return card;
+                });
+            },
+            buildBettingArea() { this.items.forEach(item => { const card = document.createElement('div'); card.className = 'bet-card'; card.dataset.id = item.id; card.innerHTML = `<div class="icon">${item.icon}</div><div class="multiplier">${item.multiplier}x</div><div class="bet-amount-on-card" style="display: none;">0</div>`; card.addEventListener('click', () => this.placeBet(item.id)); this.elements.bettingArea.appendChild(card); }); },
+            buildControls() {
+                const coinSizes = [45, 35, 35, 35, 35];
+                this.coinValues.forEach((value, index) => {
+                    const coin = document.createElement('button');
+                    coin.className = 'coin-btn'; coin.dataset.value = value;
+                    coin.style.width = `${coinSizes[index]}px`; coin.style.height = `${coinSizes[index]}px`;
+                    coin.innerHTML = `<span>${value}</span>`;
+                    if (index === 0) coin.classList.add('active');
+                    coin.addEventListener('click', () => { document.querySelectorAll('.coin-btn').forEach(c => c.classList.remove('active')); coin.classList.add('active'); this.state.selectedCoinValue = value; document.querySelectorAll('.coin-btn').forEach((c, i) => { const size = c.classList.contains('active') ? 45 : 35; c.style.width = `${size}px`; c.style.height = `${size}px`; }); });
+                    this.elements.controls.appendChild(coin);
+                });
+            },
+            updateBetDisplay(itemId) {
+                const playerBet = this.state.bets[itemId] || 0;
+                const demoBet = this.state.demoBets[itemId] || 0;
+                const totalBet = playerBet + demoBet;
+                const betCard = this.elements.bettingArea.querySelector(`.bet-card[data-id="${itemId}"]`);
+                const amountDisplay = betCard.querySelector('.bet-amount-on-card');
+                amountDisplay.textContent = totalBet;
+                amountDisplay.style.display = totalBet > 0 ? 'flex' : 'none';
+            },
+            placeBet(itemId) {
+                if (!this.state.isBettingPhase) return;
+                const betValue = this.state.selectedCoinValue;
+                if (balance < betValue) { alert("Insufficient balance."); return; }
+                balance -= betValue;
+                updateBalanceUI();
+                this.state.bets[itemId] = (this.state.bets[itemId] || 0) + betValue;
+                this.state.totalBetAmount += betValue;
+                this.updateBetDisplay(itemId);
+            },
+            determineWinner() {
+                const dueWinners = [];
+                for (const itemId in this.state.roundCounters) {
+                    this.state.roundCounters[itemId]++;
+                    const chance = this.winChances[itemId];
+                    const randomChance = Math.floor(Math.random() * chance) + 1;
+                    if (this.state.roundCounters[itemId] >= randomChance) { dueWinners.push(itemId); }
+                }
+                let winnerId = (dueWinners.length > 0) ? dueWinners[Math.floor(Math.random() * dueWinners.length)] : this.items[Math.floor(Math.random() * this.items.length)].id;
+                this.state.roundCounters[winnerId] = 0;
+                return winnerId;
+            },
+            startNewRound() {
+                this.resetHighlights();
+                this.state.isBettingPhase = true;
+                demo.start();
+                let timer = 10;
+                this.elements.timerDisplay.textContent = timer;
+                this.state.countdownInterval = setInterval(() => {
+                    timer--;
+                    this.elements.timerDisplay.textContent = timer;
+                    if (timer <= 0) {
+                        clearInterval(this.state.countdownInterval);
+                        this.runGameSequence();
+                    }
+                }, 1000);
+            },
+            runGameSequence() {
+                this.state.isBettingPhase = false;
+                demo.stop();
+                const winnerId = this.determineWinner();
+                this.runSpinner(winnerId);
+            },
+            runSpinner(winnerId) {
+                let spinDuration = 5000, spinInterval = 75, currentIndex = Math.floor(Math.random() * this.ringCardElements.length);
+                const possibleTargetIndices = [];
+                this.ringCardElements.forEach((card, index) => { if (card.dataset.id === winnerId) { possibleTargetIndices.push(index); } });
+                const targetIndex = possibleTargetIndices.length > 0 ? possibleTargetIndices[Math.floor(Math.random() * possibleTargetIndices.length)] : 0;
+                
+                const spinner = setInterval(() => {
+                    this.ringCardElements.forEach(c => c.classList.remove('highlight'));
+                    this.ringCardElements[currentIndex].classList.add('highlight');
+                    currentIndex = (currentIndex + 1) % this.ringCardElements.length;
+                }, spinInterval);
+
+                setTimeout(() => {
+                    clearInterval(spinner);
+                    this.declareWinner(targetIndex);
+                }, spinDuration);
+            },
+            declareWinner(winnerIndex) {
+                const winningCard = this.ringCardElements[winnerIndex];
+                const winnerId = winningCard.dataset.id;
+                this.ringCardElements.forEach(card => { card.classList.remove('highlight'); if (card.dataset.id === winnerId) card.classList.add('winner'); });
+                const winningBetCard = this.elements.bettingArea.querySelector(`.bet-card[data-id="${winnerId}"]`);
+                if (winningBetCard) winningBetCard.classList.add('winner');
+                this.calculateWinnings(winnerId);
+                setTimeout(() => this.resetGame(), 5000);
+            },
+            calculateWinnings(winnerId) {
+                if (this.state.bets[winnerId]) {
+                    const betAmount = this.state.bets[winnerId];
+                    const multiplier = this.items.find(i => i.id === winnerId).multiplier;
+                    const winnings = betAmount * multiplier;
+                    balance += winnings;
+                    updateBalanceUI();
+                    showWinningsPopup(winnings);
+                    if (loggedInUserKey) { database.ref('customers/' + loggedInUserKey).update({ balance: balance }); }
+                }
+            },
+            resetGame() {
+                if (loggedInUserKey && this.state.totalBetAmount > 0) { database.ref('customers/' + loggedInUserKey).update({ balance: balance }); }
+                this.state.bets = {};
+                this.state.totalBetAmount = 0;
+                this.items.forEach(item => { this.state.demoBets[item.id] = 0; this.updateBetDisplay(item.id); });
+                this.startNewRound();
+            },
+            resetHighlights() { 
+                this.ringCardElements.forEach(c => c.classList.remove('highlight', 'winner'));
+                document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('winner')); 
+            }
+        };
+
+        const demo = {
+            users: [],
+            intervalId: null,
+            init() {
+                for (let i = 0; i < 8; i++) {
+                    const uid = 10000 + Math.floor(Math.random() * 90000);
+                    this.users.push({ id: `user-${i}`, uid: `UID:${uid}`, element: null });
+                }
+                this.renderUsers();
+            },
+            renderUsers() {
+                const usersArea = document.getElementById('users-display-area');
+                usersArea.innerHTML = '';
+                this.users.forEach(user => {
+                    const userEl = document.createElement('div');
+                    userEl.className = 'demo-user';
+                    userEl.id = user.id;
+                    userEl.innerHTML = `<img src="https://i.pravatar.cc/40?u=${user.uid}" alt="User"><span class="uid">${user.uid}</span>`;
+                    usersArea.appendChild(userEl);
+                    user.element = userEl;
+                });
+            },
+            start() { if (this.intervalId) clearInterval(this.intervalId); this.intervalId = setInterval(() => this.placeRandomBet(), 400); },
+            stop() { clearInterval(this.intervalId); },
+            placeRandomBet() {
+                const randomUser = this.users[Math.floor(Math.random() * this.users.length)];
+                const randomItem = game.items[Math.floor(Math.random() * game.items.length)];
+                const randomCoinValue = game.coinValues[Math.floor(Math.random() * 3)];
+                
+                game.state.demoBets[randomItem.id] += randomCoinValue;
+                game.updateBetDisplay(randomItem.id);
+                
+                randomUser.element.classList.add('is-betting');
+                setTimeout(() => randomUser.element.classList.remove('is-betting'), 300);
+                
+                this.animateCoin(randomUser.element, document.querySelector(`.bet-card[data-id="${randomItem.id}"]`));
+            },
+            animateCoin(startEl, endEl) {
+                const coin = document.createElement('div');
+                coin.className = 'animated-coin';
+                coin.textContent = '🪙';
+                document.body.appendChild(coin);
+                const startRect = startEl.getBoundingClientRect();
+                const endRect = endEl.getBoundingClientRect();
+                const startX = startRect.left + startRect.width / 2;
+                const startY = startRect.top + startRect.height / 2;
+                const endX = endRect.left + endRect.width / 2;
+                const endY = endRect.top + endRect.height / 2;
+                coin.style.left = `${startX}px`;
+                coin.style.top = `${startY}px`;
+                requestAnimationFrame(() => {
+                    coin.style.transform = `translate(${endX - startX}px, ${endY - startY}px) scale(0.5)`;
+                    coin.style.opacity = '0';
+                });
+                setTimeout(() => coin.remove(), 600);
+            }
+        };
+
+        function setupServerStatusListener() {
+            const casinoStatusRef = database.ref('Casinoss/Status');
+            casinoStatusRef.on('value', (snapshot) => {
+                const status = snapshot.val();
+                if (status === 'off') {
+                    serverDownOverlay.classList.add('show');
+                } else {
+                    serverDownOverlay.classList.remove('show');
+                }
+            });
+        }
+
+        function checkLoginStatus() { 
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey'); 
+            if (loggedInUserKey) { 
+                loadUserData(loggedInUserKey); 
+            } else { 
+                window.location.href = 'login.html'; 
+            } 
+        }
+        
+        function loadUserData(userKey) { 
+            const userRef = database.ref('customers/' + userKey); 
+            userRef.on('value', (snapshot) => { 
+                if (snapshot.exists()) { 
+                    const userData = snapshot.val(); 
+                    if (userData.Issue && userData.Issue.Status === 'on') {
+                        window.location.href = 'technical issue.html';
+                        return;
+                    }
+                    balance = userData.balance; 
+                    updateBalanceUI(); 
+                    const profileImageUrl = `https://i.pravatar.cc/150?u=${userKey}`; 
+                    profileMainImgEl.src = profileImageUrl.replace('150', '40'); 
+                } else { 
+                    alert('User account not found.'); 
+                    handleLogout(); 
+                } 
+            }); 
+        }
+
+        function handleLogout() { if (loggedInUserKey) { database.ref('customers/' + loggedInUserKey).off(); } sessionStorage.removeItem('loggedInUserKey'); window.location.href = 'login.html'; }
+        function updateBalanceUI() { const currentBalance = parseFloat(balance) || 0; const formattedBalance = `₹ ${currentBalance.toFixed(2)}`; balanceEl.textContent = formattedBalance; }
+        
+        function init() { 
+            checkLoginStatus(); 
+            setupServerStatusListener();
+            game.init(); 
+            if (backgroundSound) { 
+                backgroundSound.volume = 0.1; 
+                const playPromise = backgroundSound.play(); 
+                if (playPromise !== undefined) { 
+                    playPromise.catch(() => { 
+                        const startAudio = () => { 
+                            backgroundSound.play(); 
+                            document.body.removeEventListener('click', startAudio); 
+                        }; 
+                        document.body.addEventListener('click', startAudio); 
+                    }); 
+                } 
+            } 
+        }
+        function showWinningsPopup(a) { winningsAmountEl.textContent = `₹ ${parseFloat(a).toFixed(2)}`; winningsPopupEl.classList.add('show'); setTimeout(() => winningsPopupEl.classList.remove('show'), 3000); }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

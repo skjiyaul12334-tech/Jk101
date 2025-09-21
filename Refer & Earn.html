@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Refer & Earn</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root { --dark-bg: #0f1923; --panel-bg: #213743; --green: #28a745; --red: #e74c3c; --orange: #ff8c00; --yellow: #ffc107; --text-light: #c1d5e0; --text-white: #ffffff; --teal-glow: #00b8a9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; align-items: center; padding: 5px; }
+        .page-container { width: 100%; max-width: 420px; height: 100%; max-height: 900px; background-color: var(--dark-bg); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--panel-bg); }
+        
+        /* --- Header Styles --- */
+        .page-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; background-color: var(--panel-bg); flex-shrink: 0; }
+        .page-header .header-left { display: flex; align-items: center; }
+        .page-header .back-btn { font-size: 24px; cursor: pointer; margin-right: 15px; font-weight: bold; color: var(--text-light); text-decoration: none; }
+        .page-header .title { font-size: 18px; font-weight: 700; color: var(--text-white); }
+        
+        /* --- Content Styles --- */
+        .main-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        
+        .refer-section { 
+            background-color: var(--panel-bg); 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+        }
+        .refer-section h3 { 
+            font-size: 1.2rem; 
+            color: var(--text-white); 
+            margin-bottom: 10px; 
+            border-left: 4px solid var(--teal-glow); 
+            padding-left: 10px; 
+        }
+        .refer-section p { 
+            font-size: 0.9rem; 
+            line-height: 1.5; 
+            color: var(--text-light); 
+        }
+        
+        .your-code-box { 
+            text-align: center; 
+            margin-top: 15px; 
+        }
+        #refer-code-display { 
+            background: var(--dark-bg); 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            font-size: 1.5rem; 
+            font-family: monospace; 
+            font-weight: 700; 
+            color: var(--yellow); 
+            letter-spacing: 3px; 
+            border: 2px dashed #4b5563; 
+        }
+        
+        .refer-actions { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 15px; 
+        }
+        .refer-actions button { 
+            flex: 1; 
+            padding: 12px; 
+            font-size: 1rem; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        #copy-refer-code-btn { 
+            background-color: var(--orange); 
+            color: var(--text-white); 
+        }
+        #share-refer-code-btn { 
+            background-color: var(--teal-glow); 
+            color: var(--text-white); 
+        }
+        .refer-actions button:active {
+            transform: scale(0.95);
+        }
+
+        #apply-code-section .input-group { 
+            display: flex; 
+            margin-top: 15px;
+        }
+        #apply-code-input { 
+            flex-grow: 1; 
+            background-color: var(--dark-bg); 
+            border: 1px solid #3a506b; 
+            color: var(--text-white); 
+            padding: 12px; 
+            border-radius: 8px 0 0 8px; 
+            font-size: 1rem; 
+            text-transform: uppercase;
+        }
+        #apply-code-input:focus {
+            outline: none;
+            border-color: var(--teal-glow);
+        }
+        #apply-code-btn { 
+            background-color: var(--green); 
+            color: var(--text-white); 
+            border-radius: 0 8px 8px 0; 
+            padding: 12px 20px; 
+            font-weight: 600; 
+            border: none; 
+            cursor: pointer; 
+        }
+        #apply-code-btn:disabled {
+            background-color: #6c757d;
+        }
+        
+        .stats-list { 
+            list-style: none; 
+            margin-top: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+        .stats-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background-color: var(--dark-bg); 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+        }
+        .stats-item .label { 
+            font-size: 1rem; 
+            color: var(--text-light); 
+        }
+        .stats-item .value { 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+            color: var(--yellow); 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-left">
+                <!-- This button now takes the user back to the home page -->
+                <a href="home.html" class="back-btn">←</a>
+                <span class="title">Refer & Earn</span>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="refer-section">
+                <h3>Your Referral Code</h3>
+                <p>Share this code with your friends. When they apply it, you both get a ₹10 bonus!</p>
+                <div class="your-code-box">
+                    <span id="refer-code-display">LOADING...</span>
+                </div>
+                <div class="refer-actions">
+                    <button id="copy-refer-code-btn">Copy</button>
+                    <button id="share-refer-code-btn">Share</button>
+                </div>
+            </div>
+            
+            <div id="apply-code-section" class="refer-section" style="display: none;">
+                <h3>Have a Referral Code?</h3>
+                <p>Enter your friend's code below to receive your welcome bonus.</p>
+                <div class="input-group">
+                    <input type="text" id="apply-code-input" placeholder="Enter 6-digit code">
+                    <button id="apply-code-btn">Apply</button>
+                </div>
+            </div>
+            
+             <div class="refer-section">
+                <h3>Your Referral Stats</h3>
+                <ul class="stats-list">
+                    <li class="stats-item">
+                        <span class="label">Friends Referred</span>
+                        <span class="value" id="friends-referred-value">0</span>
+                    </li>
+                    <li class="stats-item">
+                        <span class="label">Total Earnings</span>
+                        <span class="value" id="earnings-value">₹0.00</span>
+                    </li>
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+            storageBucket: "spin-199a1.appspot.com",
+            messagingSenderId: "201888892362",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let loggedInUserKey = null;
+
+        // UI Elements
+        const referCodeDisplay = document.getElementById('refer-code-display');
+        const copyBtn = document.getElementById('copy-refer-code-btn');
+        const shareBtn = document.getElementById('share-refer-code-btn');
+        const applyCodeSection = document.getElementById('apply-code-section');
+        const applyCodeInput = document.getElementById('apply-code-input');
+        const applyCodeBtn = document.getElementById('apply-code-btn');
+        const friendsReferredValue = document.getElementById('friends-referred-value');
+        const earningsValue = document.getElementById('earnings-value');
+
+        // --- INITIALIZATION ---
+        function init() {
+            checkLoginStatus();
+            copyBtn.addEventListener('click', handleCopyCode);
+            shareBtn.addEventListener('click', handleShareCode);
+            applyCodeBtn.addEventListener('click', handleApplyCode);
+        }
+
+        // --- AUTH & DATA LOADING ---
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                loadUserData(loggedInUserKey);
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        async function loadUserData(userKey) {
+            const userRef = database.ref('customers/' + userKey);
+            userRef.on('value', async (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    
+                    // Handle referral code generation and display
+                    if (!userData.referralCode) {
+                        const newCode = await assignReferralCode(userKey);
+                        referCodeDisplay.textContent = newCode;
+                    } else {
+                        referCodeDisplay.textContent = userData.referralCode;
+                    }
+                    
+                    // Show/Hide "Apply Code" section based on whether user has applied a code
+                    applyCodeSection.style.display = userData.hasAppliedReferral ? 'none' : 'block';
+
+                    // Update Referral Stats
+                    const referrals = userData.referrals || {};
+                    const referralCount = Object.keys(referrals).length;
+                    friendsReferredValue.textContent = referralCount;
+                    earningsValue.textContent = `₹${(referralCount * 10).toFixed(2)}`;
+
+                } else {
+                    alert('User account not found. Logging out.');
+                    handleLogout();
+                }
+            });
+        }
+        
+        // --- CORE LOGIC ---
+        async function assignReferralCode(userKey) {
+            let referralCode = '';
+            let codeExists = true;
+            // Loop until a unique code is generated
+            while(codeExists) {
+                referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const snapshot = await database.ref('referralCodes/' + referralCode).once('value');
+                codeExists = snapshot.exists();
+            }
+            // Atomically update both customer and referralCodes nodes
+            const updates = {};
+            updates[`customers/${userKey}/referralCode`] = referralCode;
+            updates[`referralCodes/${referralCode}`] = userKey;
+            await database.ref().update(updates);
+            return referralCode;
+        }
+        
+        async function handleApplyCode() {
+            const code = applyCodeInput.value.trim().toUpperCase();
+            if (code.length !== 6) {
+                alert("Please enter a valid 6-digit referral code.");
+                return;
+            }
+
+            applyCodeBtn.disabled = true;
+            applyCodeBtn.textContent = '...';
+
+            try {
+                // Check if the current user has already applied a code
+                const currentUserSnap = await database.ref(`customers/${loggedInUserKey}`).once('value');
+                if (currentUserSnap.val().hasAppliedReferral) {
+                    throw new Error("You have already used a referral code.");
+                }
+
+                // Check if the referral code exists and get the owner's ID
+                const codeOwnerSnap = await database.ref(`referralCodes/${code}`).once('value');
+                if (!codeOwnerSnap.exists()) {
+                    throw new Error("Invalid referral code.");
+                }
+                const referrerId = codeOwnerSnap.val();
+
+                // Check if user is trying to use their own code
+                if (referrerId === loggedInUserKey) {
+                    throw new Error("You cannot use your own referral code.");
+                }
+
+                // Prepare atomic updates
+                const updates = {};
+                updates[`customers/${loggedInUserKey}/balance`] = firebase.database.ServerValue.increment(10);
+                updates[`customers/${loggedInUserKey}/hasAppliedReferral`] = true;
+                updates[`customers/${referrerId}/balance`] = firebase.database.ServerValue.increment(10);
+                updates[`customers/${referrerId}/referrals/${loggedInUserKey}`] = true;
+
+                await database.ref().update(updates);
+                
+                alert("Success! ₹10 bonus has been added to your and your friend's account.");
+                applyCodeInput.value = '';
+                // The on-value listener will automatically hide the section
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                applyCodeBtn.disabled = false;
+                applyCodeBtn.textContent = 'Apply';
+            }
+        }
+        
+        // --- UI ACTIONS ---
+        function handleCopyCode() {
+            const code = referCodeDisplay.textContent;
+            if (code === 'LOADING...') return;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+            }).catch(err => console.error('Copy failed', err));
+        }
+
+        function handleShareCode() {
+            const code = referCodeDisplay.textContent;
+            if (code === 'LOADING...') return;
+            
+            const shareData = {
+                title: 'Join me and get a bonus!',
+                text: `Use my referral code ${code} to get a special bonus when you sign up on this amazing game!`,
+                url: window.location.origin // Share the base URL of the site
+            };
+
+            if (navigator.share && navigator.canShare(shareData)) {
+                navigator.share(shareData).catch(err => console.error('Share failed', err));
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                handleCopyCode();
+                alert(`Your referral code "${code}" has been copied to the clipboard. Please share it with your friends!`);
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('loggedInUserKey');
+            window.location.href = 'login.html';
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

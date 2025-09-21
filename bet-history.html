@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bet History</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        /* CSS কোড অপরিবর্তিত আছে */
+        :root { 
+            --bg-dark-green: #0d2c2a;
+            --panel-green: #1a4d4a;
+            --active-green: #16a085;
+            --text-yellow: #f1c40f;
+            --text-light: #a7c4c4;
+            --text-white: #ffffff; 
+            --win-green-text: #2ecc71;
+            --win-green-bg: #27ae60;
+            --loss-red: #e74c3c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--bg-dark-green);
+            color: var(--text-light); 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start;
+            padding: 10px 5px 5px 5px; 
+        }
+        .page-container { 
+            width: 100%; 
+            max-width: 420px; 
+            height: 100%; 
+            max-height: 900px; 
+            background-color: transparent; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .info-banner {
+            text-align: center;
+            padding: 10px;
+            background-color: var(--panel-green);
+            color: var(--text-yellow);
+            font-weight: 500;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+        .date-filter-tabs {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--panel-green);
+            padding: 5px;
+            border-radius: 30px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+        .date-filter-tabs .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            flex-grow: 1;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .date-filter-tabs .tab-btn.active {
+            background-color: var(--active-green);
+            color: var(--text-white);
+        }
+        .main-content { overflow-y: auto; flex-grow: 1; }
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .bet-history-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background-color: var(--panel-green); 
+            padding: 10px 15px; 
+            border-radius: 8px;
+        }
+        .bet-info-left { display: flex; flex-direction: column; }
+        .bet-info-left .bet-amount { font-size: 16px; font-weight: 700; color: var(--text-white); }
+        .bet-info-left .bet-multiplier { font-size: 12px; color: var(--text-yellow); font-weight: 500; }
+        .bet-info-center { font-size: 14px; color: var(--text-light); }
+        .bet-info-right { display: flex; align-items: center; gap: 10px; }
+        .bet-info-right .bet-status { font-weight: 700; }
+        .bet-info-right .bet-status.win { color: var(--win-green-text); }
+        .bet-info-right .bet-status.loss { color: var(--loss-red); }
+        .bet-info-right .bet-winnings { padding: 5px 10px; border-radius: 5px; color: var(--text-white); font-weight: 700; font-size: 14px; }
+        .bet-info-right .bet-winnings.win { background-color: var(--win-green-bg); }
+        .bet-info-right .bet-winnings.loss { background-color: var(--loss-red); }
+        .no-history-msg { text-align: center; color: var(--text-light); padding-top: 50px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- HTML অপরিবর্তিত আছে -->
+        <div class="info-banner">Deposit is usually credited in minutes</div>
+        <div class="date-filter-tabs" id="date-filter-tabs">
+            <button class="tab-btn active" data-days="1">1 Day</button>
+            <button class="tab-btn" data-days="7">7 Days</button>
+            <button class="tab-btn" data-days="30">30 Days</button>
+        </div>
+        <main class="main-content">
+            <div class="history-list" id="bet-history-list">
+                <p class="no-history-msg">Loading bet history...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let loggedInUserKey = null;
+        let allHistoryData = {};
+        let currentFilterDays = 1;
+
+        const historyListContainer = document.getElementById('bet-history-list');
+        const dateFilterContainer = document.getElementById('date-filter-tabs');
+
+        function init() {
+            checkLoginStatus();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            dateFilterContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('tab-btn')) {
+                    currentFilterDays = parseInt(event.target.dataset.days, 10);
+                    dateFilterContainer.querySelector('.tab-btn.active').classList.remove('active');
+                    event.target.classList.add('active');
+                    renderBetHistoryList();
+                }
+            });
+        }
+
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                fetchBetHistory(loggedInUserKey);
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        
+        function fetchBetHistory(userKey) {
+            const historyRef = database.ref('betHistory');
+            
+            historyRef.orderByChild('userId').equalTo(userKey).on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                allHistoryData = data;
+                renderBetHistoryList();
+                // === পরিবর্তন এখানে: ডেটা লোড হওয়ার পর পুরনো ডেটা ডিলিট করার জন্য ফাংশন কল করা হচ্ছে ===
+                deleteOldHistory(data);
+            });
+        }
+        
+        function renderBetHistoryList() {
+            historyListContainer.innerHTML = '';
+
+            const now = new Date();
+            const today_start = new Date();
+            today_start.setHours(0, 0, 0, 0);
+
+            const seven_days_ago = new Date();
+            seven_days_ago.setDate(now.getDate() - 7);
+            seven_days_ago.setHours(0, 0, 0, 0);
+
+            const thirty_days_ago = new Date();
+            thirty_days_ago.setDate(now.getDate() - 30);
+            thirty_days_ago.setHours(0, 0, 0, 0);
+
+            const baseArray = Object.keys(allHistoryData).map(key => ({ id: key, ...allHistoryData[key] }));
+            let historyArray;
+
+            if (currentFilterDays === 1) {
+                historyArray = baseArray.filter(item => new Date(item.timestamp) >= today_start);
+            } else if (currentFilterDays === 7) {
+                historyArray = baseArray.filter(item => new Date(item.timestamp) >= seven_days_ago);
+            } else {
+                historyArray = baseArray.filter(item => new Date(item.timestamp) >= thirty_days_ago);
+            }
+            
+            historyArray.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (historyArray.length === 0) {
+                historyListContainer.innerHTML = `<p class="no-history-msg">You've not any transactions till now</p>`;
+                return;
+            }
+            
+            historyArray.forEach(item => {
+                const listItem = document.createElement('div');
+                listItem.className = 'bet-history-item';
+                
+                const betAmount = parseFloat(item.betAmount).toFixed(2);
+                let statusClass, statusText, resultHtml;
+
+                if (item.status === 'cashedOut') {
+                    statusClass = 'win';
+                    statusText = 'You Win';
+                    resultHtml = `<span class="bet-winnings win">+${parseFloat(item.winnings).toFixed(2)}</span>`;
+                } else {
+                    statusClass = 'loss';
+                    statusText = 'You Lose';
+                    resultHtml = `<span class="bet-winnings loss">-${betAmount}</span>`;
+                }
+                
+                listItem.innerHTML = `
+                    <div class="bet-info-left">
+                        <span class="bet-amount">₹ ${betAmount}</span>
+                        <span class="bet-multiplier">${parseFloat(item.finalMultiplier).toFixed(2)}x</span>
+                    </div>
+                    <div class="bet-info-center">
+                        ${formatDate(item.timestamp)}
+                    </div>
+                    <div class="bet-info-right">
+                        <span class="bet-status ${statusClass}">${statusText}</span>
+                        ${resultHtml}
+                    </div>
+                `;
+                
+                historyListContainer.appendChild(listItem);
+            });
+        }
+
+        // === START: নতুন ফাংশন যা ৭ দিনের পুরনো ডেটা ডিলিট করে ===
+        function deleteOldHistory(historyData) {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const sevenDaysAgoTimestamp = sevenDaysAgo.getTime();
+
+            for (const key in historyData) {
+                const item = historyData[key];
+                // Check if the item has a timestamp and if it's older than 7 days
+                if (item.timestamp && item.timestamp < sevenDaysAgoTimestamp) {
+                    // It's an old record, so delete it from Firebase.
+                    console.log(`Deleting old record (older than 7 days): ${key}`);
+                    database.ref('betHistory/' + key).remove()
+                        .catch(error => {
+                            console.error(`Failed to delete record ${key}:`, error);
+                        });
+                }
+            }
+        }
+        // === END: নতুন ফাংশন ===
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            return new Date(timestamp).toLocaleDateString('en-GB');
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

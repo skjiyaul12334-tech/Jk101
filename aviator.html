@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Firebase Controlled Crash Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root { --dark-bg: #0f1923; --panel-bg: #213743; --green: #28a745; --red: #e74c3c; --orange: #ff8c00; --yellow: #ffc107; --text-light: #c1d5e0; --text-white: #ffffff; --teal-glow: #00b8a9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; align-items: center; padding: 5px; }
+        .game-container { width: 100%; max-width: 420px; height: 100%; max-height: 900px; background-color: var(--dark-bg); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--panel-bg); }
+        .top-bar { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: var(--panel-bg); }
+        .profile-icon { cursor: pointer; }
+        .profile-icon img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 14px; position: relative; }
+        .balance .coin { margin-right: 6px; }
+        .balance-add-btn { margin-left: 8px; background-color: var(--green); color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .balance-add-btn:hover { transform: scale(1.1); }
+        .top-icons { display: flex; align-items:center; gap: 15px; font-size: 20px; }
+        .top-icons .icon-menu, .top-icons .icon-notification { cursor: pointer; font-size: 24px; }
+        .history-bar { flex-shrink: 0; padding: 6px 12px; background: #1a2c38; display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+        .history-bar::-webkit-scrollbar { display: none; }
+        .history-item { font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 4px; }
+        .game-screen { flex-grow: 1; position: relative; min-height: 250px; background: radial-gradient(ellipse at 70% 30%, rgba(108, 25, 153, 0.3) 0%, rgba(108, 25, 153, 0) 70%), repeating-conic-gradient(from 0deg at 50% 100%, #1a1a1a 0deg 5deg, #0f1923 5deg 15deg); display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #game-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .multiplier { font-size: 4rem; font-weight: 700; color: var(--text-white); text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); z-index: 10; }
+        .multiplier.crashed { color: var(--red); text-shadow: 0 0 15px var(--red); }
+        #plane { position: absolute; width: 60px; height: 60px; z-index: 5; transition: left 0.1s linear, bottom 0.1s linear, transform 0.1s linear; }
+        #plane svg { transform: rotate(-15deg); overflow: visible; width: 100%; height: 100%; }
+        #propeller { animation: spin-propeller 0.05s linear infinite; }
+        @keyframes spin-propeller { to { transform: rotate(360deg); } }
+        .progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; color: white; font-size: 1.2rem; opacity: 1; transition: opacity 0.5s ease; }
+        .progress-container.hidden { opacity: 0; pointer-events: none; }
+        #progress-bar { width: 80%; height: 8px; background-color: var(--panel-bg); border-radius: 5px; margin-top: 10px; overflow: hidden; }
+        #progress-bar-inner { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--teal-glow)); border-radius: 5px; transition: width 6s linear; }
+        .controls-area { flex-shrink: 0; padding: 8px; display: flex; flex-direction: column; gap: 8px; background-color: var(--dark-bg); }
+        .bet-panel { background-color: var(--panel-bg); border-radius: 8px; padding: 10px; }
+        .tabs { display: flex; background-color: var(--dark-bg); border-radius: 6px; overflow: hidden; }
+        .tab { padding: 6px 12px; cursor: pointer; color: var(--text-light); font-weight: 500; font-size: 14px; }
+        .tab.active { background-color: var(--teal-glow); color: var(--text-white); }
+        .auto-cashout-section { margin-top: 8px; display: flex; flex-direction: column; }
+        .auto-cashout-section.hidden { display: none; }
+        .auto-cashout-section label { font-size: 12px; margin-bottom: 4px; }
+        .auto-cashout-section input { background-color: var(--dark-bg); border: 1px solid #3a506b; border-radius: 4px; color: var(--text-white); padding: 6px; width: 100%; font-size: 14px; }
+        .bet-controls { display: flex; gap: 8px; align-items: stretch; margin-top: 8px; }
+        .bet-amount-wrapper { flex-grow: 1; }
+        .bet-amount { display: flex; align-items: center; background-color: var(--dark-bg); border-radius: 6px; padding: 2px; }
+        .bet-amount button { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 0 8px; }
+        .bet-amount input { width: 100%; background: none; border: none; color: var(--text-white); text-align: center; font-size: 16px; font-weight: 700; }
+        .bet-amount input:focus { outline: none; }
+        .preset-bets { display: flex; justify-content: space-between; gap: 5px; margin-top: 6px; }
+        .preset-bets button { background-color: #3a506b; border: none; color: var(--text-light); border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
+        .action-button { flex-shrink: 0; width: 120px; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 0.3s ease; display: flex; flex-direction: column; justify-content: center; align-items: center; line-height: 1.2; padding: 5px 0; }
+        .action-button small { font-size: 11px; font-weight: 500; }
+        .action-button.bet { background-color: var(--green); color: var(--text-white); }
+        .action-button.waiting { background-color: var(--yellow); color: var(--dark-bg); }
+        .action-button.cashout { background-color: var(--orange); color: var(--text-white); }
+        .action-button.cashed-out { background-color: #3a506b; color: var(--text-light); }
+        .action-button:disabled { background-color: #6c757d; cursor: not-allowed; }
+
+        #toast-container {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: linear-gradient(135deg, var(--green), #38d39f);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-size: 1rem;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast .toast-icon {
+            font-size: 1.8rem;
+        }
+        .toast .toast-message strong {
+            display: block;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+         <header class="top-bar">
+            <div class="profile-icon" id="profile-icon-btn"><img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P"></div>
+            <div class="balance">
+                <span class="coin">💰</span><span id="balance-amount">0.00</span>
+                <span class="balance-add-btn" id="balance-add-btn">+</span>
+            </div>
+            <div class="top-icons">
+                <span class="icon-notification" id="notification-icon-btn">🔔</span>
+                <span class="icon-menu" id="menu-icon-btn">☰</span>
+            </div>
+        </header>
+        <div class="history-bar" id="history-bar"></div>
+        <main class="game-screen">
+            <canvas id="game-canvas"></canvas>
+            <div class="progress-container" id="progress-container"><span id="progress-text">Starting in 6s</span><div id="progress-bar"><div id="progress-bar-inner"></div></div></div>
+            <div class="multiplier" id="multiplier">1.00x</div>
+            <div id="plane">
+                 <svg fill="#e74c3c" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                    <g id="propeller" style="transform-origin: 450px 235px; fill: #bdbdbd;">
+                        <rect x="445" y="175" width="10" height="120" rx="5" />
+                        <rect x="390" y="230" width="120" height="10" rx="5" />
+                    </g>
+                    <circle cx="450" cy="235" r="15" fill="#e74c3c" stroke="#c0392b" stroke-width="3"/>
+                    <path d="M448 224h-62.5l-42.2-70.3c-27.4-45.7-75.7-73.7-127.3-73.7H192c-17.7 0-32 14.3-32 32s14.3 32 32 32h24.2c22.1 0 42.5 9.3 56.7 25l42.4 46.7H144c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64h21.4l-40.4 67.4c-9.3 15.5-7.7 34.9 4 48.7s31.1 19.3 48.5 13.8l112.5-37.5 112.5 37.5c17.4 5.5 36.6 3.1 48.5-13.8s13.3-33.2 4-48.7L346.6 384H368c35.3 0 64-28.7 64-64v-32c0-35.3-28.7-64-64-64z"/>
+                    <text x="260" y="275" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" transform="rotate(-15 260 275)">X</text>
+                </svg>
+            </div>
+        </main>
+        <footer class="controls-area">
+            <div class="bet-panel" data-panel-index="0"><div class="tabs"><div class="tab active" data-tab-type="bet">Bet</div><div class="tab" data-tab-type="auto">Auto</div></div><div class="auto-cashout-section hidden"><label for="auto-cashout-input-0">Auto Cash Out at (e.g., 2.5):</label><input type="number" id="auto-cashout-input-0" placeholder="1.01"></div><div class="bet-controls"><div class="bet-amount-wrapper"><div class="bet-amount"><button onclick="updateBet(0, -10)">-</button><input type="number" id="bet-input-0" value="10.00" step="1"><button onclick="updateBet(0, 10)">+</button></div><div class="preset-bets"><button onclick="setPreset(0, 10)">10</button><button onclick="setPreset(0, 50)">50</button><button onclick="setPreset(0, 100)">100</button><button onclick="setPreset(0, 500)">500</button></div></div><button class="action-button bet" id="action-button-0" onclick="handleAction(0)">Place your bet</button></div></div>
+            <div class="bet-panel" data-panel-index="1"><div class="tabs"><div class="tab active" data-tab-type="bet">Bet</div><div class="tab" data-tab-type="auto">Auto</div></div><div class="auto-cashout-section hidden"><label for="auto-cashout-input-1">Auto Cash Out at (e.g., 2.5):</label><input type="number" id="auto-cashout-input-1" placeholder="1.01"></div><div class="bet-controls"><div class="bet-amount-wrapper"><div class="bet-amount"><button onclick="updateBet(1, -10)">-</button><input type="number" id="bet-input-1" value="10.00" step="1"><button onclick="updateBet(1, 10)">+</button></div><div class="preset-bets"><button onclick="setPreset(1, 10)">10</button><button onclick="setPreset(1, 50)">50</button><button onclick="setPreset(1, 100)">100</button><button onclick="setPreset(1, 500)">500</button></div></div><button class="action-button bet" id="action-button-1" onclick="handleAction(1)">Place your bet</button></div></div>
+        </footer>
+    </div>
+    
+    <div id="toast-container"></div>
+    
+    <audio id="background-sound" src="https://cdn.pixabay.com/download/audio/2022/11/17/audio_821cd95a82.mp3?filename=background-music-for-short-video-126259.mp3" loop></audio>
+    <audio id="takeoff-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_1e57467362.mp3"></audio>
+    <audio id="crash-sound" src="https://cdn.pixabay.com/audio/2022/03/13/audio_25a31a9bda.mp3"></audio>
+    <audio id="win-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_bb630cc098.mp3?filename=short-success-sound-glockenspiel-treasure-video-game-2-186346.mp3"></audio>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        const autoStatusRef = database.ref('auto/Status');
+        const autoIndexRef = database.ref('auto/currentIndex');
+        const plenRef = database.ref('plen/alfa');
+        const crashRef = database.ref('crash');
+        
+        let isAutoMode = false;
+
+        const autoCrashValues = [
+            1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2, 1, 1.01, 1.03, 2.01, 1.60, 1.70, 1.40, 1.01, 1.04, 1.07, 1.40, 2, 10, 1, 1.01, 10, 2
+        ];
+        
+        let state = 'WAITING', currentMultiplier = 1.00, balance = 0.00, loggedInUserKey = null;
+        let pathHistory = [];
+
+        const balanceEl = document.getElementById('balance-amount');
+        const historyBarEl = document.getElementById('history-bar');
+        const progressContainerEl = document.getElementById('progress-container');
+        const multiplierEl = document.getElementById('multiplier');
+        const planeEl = document.getElementById('plane');
+        const betPanels = document.querySelectorAll('.bet-panel');
+        const betInputs = [document.getElementById('bet-input-0'), document.getElementById('bet-input-1')];
+        const actionButtons = [document.getElementById('action-button-0'), document.getElementById('action-button-1')];
+        const backgroundSound = document.getElementById('background-sound'), takeoffSound = document.getElementById('takeoff-sound'), crashSound = document.getElementById('crash-sound'), winSound = document.getElementById('win-sound');
+
+        function showWinToast(amount) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <span class="toast-icon">🏆</span>
+                <div class="toast-message">
+                    <strong>You Win!</strong>
+                    <span>+  ₹${amount.toFixed(2)}</span>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            if (winSound) {
+                winSound.currentTime = 0;
+                winSound.volume = 0.5;
+                winSound.play().catch(()=>{});
+            }
+            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 4000);
+        }
+
+        function checkLoginStatus() { 
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey'); 
+            if (!loggedInUserKey) { 
+                window.location.href = 'login.html'; 
+            } else {
+                loadUserData(loggedInUserKey);
+            }
+        }
+        
+        function updateBalanceUI() { if (balanceEl) balanceEl.textContent = (parseFloat(balance) || 0).toFixed(2); }
+        
+        function loadUserData(userKey) {
+            database.ref('customers/' + userKey).on('value', async (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    if (userData.Issue && userData.Issue.Status === 'on') {
+                        window.location.href = 'technical issue.html';
+                        return;
+                    }
+                    balance = userData.balance;
+                    document.getElementById('profile-main-img').src = userData.profileImage || `https://i.pravatar.cc/40?u=${userKey}`;
+                    updateBalanceUI();
+                }
+            });
+        }
+        
+        function setupNavigationListeners() { 
+            document.getElementById('profile-icon-btn').addEventListener('click', () => { window.location.href = 'profile.html'; }); 
+            document.getElementById('balance-add-btn').addEventListener('click', () => { window.location.href = 'addmoney.html'; }); 
+            document.getElementById('notification-icon-btn').addEventListener('click', () => { window.location.href = 'notification.html'; }); 
+            document.getElementById('menu-icon-btn').addEventListener('click', () => { window.location.href = 'bet-history.html'; }); 
+        }
+
+        function init() { 
+            checkLoginStatus(); 
+            addInitialHistory(); 
+            setupTabs(); 
+            autoStatusRef.on('value', (snapshot) => { 
+                isAutoMode = (snapshot.val() === 'auto');
+            });
+            setupNavigationListeners();
+            resizeCanvas(); 
+            window.addEventListener('resize', resizeCanvas); 
+            startBettingPhase(); 
+            if (backgroundSound) { backgroundSound.volume = 0.2; backgroundSound.play().catch(() => {}); } 
+        }
+        
+        function placeBet(index) {
+            const betAmount = parseFloat(betInputs[index].value);
+            if (isNaN(betAmount) || betAmount <= 0) { alert("Invalid bet."); return; }
+            if (betAmount > balance) { alert("Insufficient balance."); return; }
+            
+            database.ref('customers/' + loggedInUserKey + '/balance').transaction((currentBalance) => (currentBalance >= betAmount) ? currentBalance - betAmount : undefined)
+            .then((result) => {
+                if(result.committed) {
+                    bets[index].placed = true;
+                    bets[index].amount = betAmount;
+                    updateButtonState(index, 'waiting', 'Waiting...');
+                } else {
+                    alert("Failed to place bet. Insufficient balance.");
+                }
+            });
+        }
+        
+        function cashOut(index) {
+            if (!bets[index].placed || bets[index].cashedOut) return;
+            const winnings = bets[index].amount * currentMultiplier;
+            database.ref('customers/' + loggedInUserKey + '/balance').transaction((currentBalance) => (currentBalance || 0) + winnings)
+            .then((result) => {
+                if(result.committed) {
+                    bets[index].cashedOut = true;
+                    updateButtonState(index, 'cashed-out', `Cashed Out @ ${currentMultiplier.toFixed(2)}x`);
+                    showWinToast(winnings);
+                    database.ref('betHistory').push({
+                        userId: loggedInUserKey,
+                        betAmount: bets[index].amount,
+                        status: 'cashedOut',
+                        finalMultiplier: currentMultiplier,
+                        winnings: winnings,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            });
+        }
+        
+        async function generateAndSetCrashPoint() {
+            try {
+                if (isAutoMode) {
+                    const snapshot = await autoIndexRef.once('value');
+                    let currentIndex = snapshot.val() || 0;
+                    if (currentIndex >= autoCrashValues.length || currentIndex < 0) { currentIndex = 0; }
+                    const newCrashPoint = autoCrashValues[currentIndex];
+                    await crashRef.set(newCrashPoint);
+                    let nextIndex = (currentIndex + 1) % autoCrashValues.length;
+                    await autoIndexRef.set(nextIndex);
+                } else {
+                    const newCrashPoint = (1.5 + Math.random() * 5).toFixed(2);
+                    await crashRef.set(newCrashPoint);
+                }
+            } catch (error) {
+                const fallbackCrashPoint = (1.2 + Math.random()).toFixed(2);
+                await crashRef.set(fallbackCrashPoint);
+            }
+        }
+
+        async function startBettingPhase() { 
+            state = 'BETTING'; 
+            await plenRef.set('progress');
+            await generateAndSetCrashPoint();
+            resetUIForNewRound(); 
+            progressContainerEl.classList.remove('hidden'); 
+            const pbi = document.getElementById('progress-bar-inner'); 
+            pbi.style.transition = 'none'; pbi.style.width = '0%'; 
+            void pbi.offsetWidth; 
+            pbi.style.transition = 'width 6s linear'; 
+            pbi.style.width = '100%'; 
+            let c = 6; 
+            document.getElementById('progress-text').textContent = `Starting in ${c.toFixed(1)}s`; 
+            const ci = setInterval(() => { c -= 0.1; if (c > 0) document.getElementById('progress-text').textContent = `Starting in ${c.toFixed(1)}s`; }, 100); 
+            setTimeout(() => { clearInterval(ci); startGame(); }, 6000); 
+        }
+
+        async function startGame() { 
+            state = 'RUNNING'; 
+            await plenRef.set('active');
+            progressContainerEl.classList.add('hidden'); 
+            if (takeoffSound) { takeoffSound.currentTime = 0; takeoffSound.play().catch(e => {}); }
+            bets.forEach((bet, i) => { if (bet.placed) { updateButtonState(i, 'cashout', `Cash Out`); } else { actionButtons[i].disabled = true; } }); 
+            crashPoint = await crashRef.once('value').then(s => parseFloat(s.val()) || 2.0);
+            gameLoopInterval = setInterval(gameLoop, 100); 
+        }
+        
+        function gameLoop() { 
+            currentMultiplier += 0.01 + (currentMultiplier / 30); 
+            if (crashPoint && currentMultiplier >= crashPoint) { crash(); return; } 
+            bets.forEach((bet, i) => { 
+                if (bet.placed && !bet.cashedOut) { 
+                    const cw = (bet.amount * currentMultiplier).toFixed(2);
+                    actionButtons[i].innerHTML = `Cash Out<br><small>৳${cw}</small>`;
+                    const autoCashoutInput = document.getElementById(`auto-cashout-input-${i}`);
+                    if (autoCashoutInput && autoCashoutInput.value) {
+                        const autoCashoutValue = parseFloat(autoCashoutInput.value);
+                        if (!isNaN(autoCashoutValue) && currentMultiplier >= autoCashoutValue) {
+                            cashOut(i);
+                        }
+                    }
+                }
+            }); 
+            updateGameUI(); 
+        }
+
+        function crash() { 
+            if (state === 'CRASHED') return; 
+            state = 'CRASHED';
+            if (takeoffSound) takeoffSound.pause(); 
+            if (crashSound) { crashSound.currentTime = 0; crashSound.play().catch(e => {}); } 
+            plenRef.set('deactive'); 
+            clearInterval(gameLoopInterval); 
+            multiplierEl.textContent = `${crashPoint.toFixed(2)}x`; 
+            multiplierEl.classList.add('crashed'); 
+            planeEl.style.opacity = '0'; 
+            updateHistory(crashPoint); 
+            
+            bets.forEach((bet, index) => {
+                if(bet.placed && !bet.cashedOut) {
+                    database.ref('betHistory').push({
+                        userId: loggedInUserKey,
+                        betAmount: bet.amount,
+                        status: 'lost',
+                        finalMultiplier: crashPoint,
+                        winnings: -bet.amount,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            });
+
+            setTimeout(startBettingPhase, 4000); 
+        }
+
+        function resetUIForNewRound() {
+            multiplierEl.textContent = '1.00x'; multiplierEl.classList.remove('crashed');
+            currentMultiplier = 1.00;
+            planeEl.style.opacity = '1';
+            const canvas = document.getElementById('game-canvas');
+            planeEl.style.left = `${20 - 30}px`;
+            planeEl.style.bottom = `${canvas.height - (canvas.height - 20) - 30}px`;
+            planeEl.style.transform = `rotate(0rad)`;
+            pathHistory = []; 
+            drawPathOnCanvas();
+            bets.forEach((bet, i) => {
+                bet.placed = false; bet.cashedOut = false;
+                updateButtonState(i, 'bet', 'Place your bet');
+                actionButtons[i].disabled = false;
+                actionButtons[i].innerHTML = 'Place your bet';
+            });
+        }
+
+        function resizeCanvas() { const canvas = document.getElementById('game-canvas'); canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; drawPathOnCanvas(); }
+        function setupTabs() { betPanels.forEach(panel => { const tabs = panel.querySelectorAll('.tab'); const autoSection = panel.querySelector('.auto-cashout-section'); tabs.forEach(tab => { tab.addEventListener('click', () => { tabs.forEach(t => t.classList.remove('active')); tab.classList.add('active'); autoSection.classList.toggle('hidden', tab.dataset.tabType !== 'auto'); }); }); }); }
+        
+        let gameLoopInterval, crashPoint; 
+        const bets = [ { placed: false, amount: 0, cashedOut: false }, { placed: false, amount: 0, cashedOut: false } ];
+        
+        function handleAction(index) { 
+            if (!loggedInUserKey) return; 
+            if (state === 'BETTING') placeBet(index); 
+            else if (state === 'RUNNING' && bets[index].placed && !bets[index].cashedOut) cashOut(index); 
+        }
+        
+        function updateGameUI() { 
+            multiplierEl.textContent = `${currentMultiplier.toFixed(2)}x`; 
+            const canvas = document.getElementById('game-canvas'); 
+            const { width, height } = canvas; 
+            const time = Math.log(currentMultiplier); 
+            const graphWidth = width - 40; 
+            const graphHeight = height - 40; 
+            let x = 20 + time * (graphWidth / Math.log(crashPoint > 10 ? crashPoint : 10)); 
+            let y = height - 20 - (Math.pow(currentMultiplier, 0.4) - 1) * (graphHeight / (Math.pow(10, 0.4) - 1)); 
+            x = Math.min(x, width - 20); 
+            y = Math.max(y, 20); 
+            pathHistory.push({ x, y }); 
+            const planeSize = 60; 
+            planeEl.style.left = `${x - planeSize / 2}px`; 
+            planeEl.style.bottom = `${height - y - planeSize / 2}px`; 
+            if (pathHistory.length > 1) { 
+                const prevPoint = pathHistory[pathHistory.length - 2]; 
+                const angle = Math.atan2(y - prevPoint.y, x - prevPoint.x); 
+                planeEl.style.transform = `rotate(${angle}rad)`; 
+            } 
+            drawPathOnCanvas(); 
+        }
+        
+        function drawGrid(ctx, width, height) { 
+            ctx.fillStyle = 'rgba(0, 184, 169, 0.7)'; 
+            const dotRadius = 2; 
+            for (let i = 0; i < 10; i++) { 
+                const y = height - 20 - (i * (height - 40) / 9); 
+                ctx.beginPath(); 
+                ctx.arc(10, y, dotRadius, 0, Math.PI * 2); 
+                ctx.fill(); 
+            } 
+            for (let i = 0; i < 10; i++) { 
+                const x = 20 + (i * (width - 40) / 9); 
+                ctx.beginPath(); 
+                ctx.arc(x, height - 10, dotRadius, 0, Math.PI * 2); 
+                ctx.fill(); 
+            } 
+        }
+        
+        function drawPathOnCanvas() { 
+            const canvas = document.getElementById('game-canvas'); 
+            const ctx = canvas.getContext('2d'); 
+            const { width, height } = canvas; 
+            ctx.clearRect(0, 0, width, height); 
+            drawGrid(ctx, width, height); 
+            if (pathHistory.length < 1) return; 
+            const fillGradient = ctx.createLinearGradient(0, 0, 0, height); 
+            fillGradient.addColorStop(0, 'rgba(231, 76, 60, 0)'); 
+            fillGradient.addColorStop(0.5, 'rgba(231, 76, 60, 0.3)'); 
+            fillGradient.addColorStop(1, 'rgba(192, 57, 43, 0.6)'); 
+            ctx.beginPath(); 
+            ctx.moveTo(20, height - 20); 
+            for (const p of pathHistory) { ctx.lineTo(p.x, p.y); } 
+            const lastPoint = pathHistory[pathHistory.length - 1]; 
+            ctx.lineTo(lastPoint.x, height - 20); 
+            ctx.closePath(); 
+            ctx.fillStyle = fillGradient; ctx.fill(); 
+            ctx.beginPath(); 
+            ctx.moveTo(pathHistory[0].x, pathHistory[0].y); 
+            for (let i = 1; i < pathHistory.length; i++) { ctx.lineTo(pathHistory[i].x, pathHistory[i].y); } 
+            ctx.strokeStyle = '#e74c3c'; 
+            ctx.lineWidth = 4; 
+            ctx.lineCap = 'round'; 
+            ctx.lineJoin = 'round'; 
+            ctx.stroke(); 
+        }
+        
+        function updateButtonState(i, s, t) { const b = actionButtons[i]; b.className = 'action-button'; b.classList.add(s); b.innerHTML = t; }
+        function updateBet(i, c) { const inp = betInputs[i]; let v = parseFloat(inp.value) || 0; v += c; if (v < 0) v = 0; inp.value = v.toFixed(2); }
+        function setPreset(i, a) { betInputs[i].value = a.toFixed(2); }
+        function updateHistory(v) { const e = document.createElement('span'); e.className = 'history-item'; e.textContent = `${v.toFixed(2)}x`; if (v >= 10.0) { e.style.backgroundColor = 'var(--yellow)'; e.style.color = 'var(--dark-bg)'; } else if (v >= 2.0) { e.style.backgroundColor = 'var(--green)'; e.style.color = 'var(--text-white)'; } else { e.style.backgroundColor = 'var(--red)'; e.style.color = 'var(--text-white)'; } historyBarEl.prepend(e); if (historyBarEl.children.length > 20) { historyBarEl.removeChild(historyBarEl.lastChild); } }
+        function addInitialHistory() { [1.80, 2.39, 1.37, 10.43, 1.03, 5.21, 1.15].forEach(v => updateHistory(v)); }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>

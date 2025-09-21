@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Lobby & Spin</title>
+    <!-- External CSS & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&family=Lilita+One&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- General Styles --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        :root { 
+            --dark-bg: #4c0000; /* Dark Red */
+            --panel-bg: #800000; /* Medium Red */
+            --green: #28a745; 
+            --red: #e74c3c; 
+            --orange: #ff8c00; 
+            --yellow: #ffc107; 
+            --text-light: #f5c5c5; /* Light Reddish White */
+            --text-white: #ffffff; 
+            --teal-glow: #ff5252; /* Bright Red for highlights */
+            --primary-gold: #ffc107;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        html, body { height: 100%; }
+        
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            color: var(--text-light); 
+            background-color: var(--dark-bg);
+        }
+        
+        .game-container { 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(180deg, #6a0000, #4c0000);
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            max-width: 420px; /* Max width for consistency */
+            margin: 0 auto;
+        }
+        
+        /* --- Header Styles --- */
+        .top-bar { 
+            flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; 
+            padding: 8px 12px; 
+            background-color: rgba(0,0,0, 0.2); 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .profile-icon-link { display: block; }
+        .profile-icon-link img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--teal-glow); display: block; }
+        .balance-wrapper {
+            display: flex; align-items: center; background-color: rgba(0,0,0,0.3);
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .balance { display: flex; align-items: center; font-weight: 700; font-size: 14px; }
+        .add-money-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; }
+        .add-money-icon svg { width: 22px; height: 22px; fill: var(--green); }
+        .top-icons { display: flex; align-items:center; gap: 16px; font-size: 24px; }
+        .top-icons a { color: var(--text-light); text-decoration: none; display: flex; align-items: center; }
+        .notification-icon { position: relative; }
+        .notification-icon svg { width: 26px; height: 26px; fill: currentColor; }
+        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; font-weight: bold; display: none; justify-content: center; align-items: center; }
+        .notification-badge.show { display: flex; }
+
+        /* --- Spin Content Styles --- */
+        .fullscreen-dialog { 
+            flex-grow: 1;
+            width: 100%; 
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .dialog-content { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 15px; 
+            gap: 15px; 
+            background: transparent;
+        }
+        .wheel-section { 
+            position: relative; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            margin-top: 20px; 
+        }
+        .wheel-pointer { 
+            width: 0; height: 0; border-left: 15px solid transparent; 
+            border-right: 15px solid transparent; border-top: 25px solid var(--text-white); 
+            position: absolute; top: -10px; z-index: 2; 
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); 
+        }
+        .wheel { 
+            width: 250px; height: 250px; border-radius: 50%; position: relative; 
+            border: 5px solid #4c0000; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(0,0,0,0.4); 
+            transition: transform 5s cubic-bezier(0.25, 1, 0.5, 1); 
+            background: conic-gradient(grey 0% 100%); 
+        }
+        .wheel-center { 
+            content: ''; position: absolute; width: 30px; height: 30px; background: #800000; 
+            border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            border: 4px solid var(--primary-gold); z-index: 3; 
+        }
+        .wheel-numbers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .wheel-number { position: absolute; top: 50%; left: 50%; color: white; font-size: 1.2em; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.8); transform: translate(-50%, -50%); }
+        
+        .controls { display: flex; justify-content: center; align-items: stretch; gap: 10px; margin-top: 15px; }
+        .bet-stepper { display: flex; align-items: center; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; }
+        .bet-stepper button { background: none; border: none; font-size: 1.5em; font-weight: bold; padding: 5px 15px; cursor: pointer; color: var(--text-white); }
+        .bet-stepper input { width: 60px; text-align: center; font-size: 1.2em; border: none; background-color: transparent; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2); color: var(--text-white); }
+        .status-history { display: flex; justify-content: center; gap: 8px; height: 20px; margin: 15px 0; }
+        .history-circle { width: 20px; height: 20px; border-radius: 50%; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); }
+        .quick-bets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .quick-bet-btn { padding: 10px 5px; font-size: 1em; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; color: var(--text-white); }
+        .play-btn { flex-grow: 1; padding: 12px 20px; font-size: 1.2em; font-weight: 700; color: #4c0000; background: linear-gradient(145deg, #ffdf7e, #ffc312); border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(255,195,18,0.3); }
+        .play-btn:disabled { background: #888 !important; color: #ccc !important; cursor: not-allowed !important; box-shadow: none !important; }
+
+        .win-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .win-popup-overlay.show { display: flex; }
+        .win-popup-content { background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); width: 85%; max-width: 320px; padding: 20px; border-radius: 20px; border: 4px solid var(--primary-gold); text-align: center; color: white; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popup-appear 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        @keyframes popup-appear { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .popup-title { font-family: 'Lilita One', cursive; font-size: 3em; color: var(--primary-gold); text-shadow: 2px 2px 0 #4c0000; }
+        .popup-stars { font-size: 2.5em; color: var(--primary-gold); margin: 10px 0; }
+        .popup-winnings { display: inline-flex; align-items: center; gap: 10px; background-color: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 50px; border: 2px solid var(--primary-gold); margin-bottom: 25px; }
+        .popup-collect-btn { background: linear-gradient(to bottom, #ff4081, #d81b60); color: white; border: none; padding: 15px 40px; font-size: 1.2em; font-weight: bold; border-radius: 50px; cursor: pointer; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <header class="top-bar">
+             <a href="profile.html" class="profile-icon-link"><img id="profile-main-img" src="https://i.pravatar.cc/40?u=guest" alt="P"></a>
+            <div class="balance-wrapper">
+                <div class="balance"><span class="coin">💰</span><span id="balance-amount" class="balance-amount">0.00</span></div>
+                <a href="addmoney.html" class="add-money-icon"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></a>
+            </div>
+            <div class="top-icons">
+                <a href="notification.html" id="notification-icon-btn" class="notification-icon"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg><span id="notification-count-badge" class="notification-badge"></span></a>
+                <a href="contact.html" class="menu-icon-link">☰</a>
+            </div>
+        </header>
+        
+        <div class="fullscreen-dialog" id="spin-dialog">
+            <div class="dialog-content">
+                <div class="wheel-section">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel" id="wheel">
+                        <div class="wheel-numbers"></div>
+                        <div class="wheel-center"></div>
+                    </div>
+                </div>
+                <div class="status-history" id="spin-history-circles"></div>
+                <div class="controls">
+                    <div class="bet-stepper">
+                        <button id="spin-btn-minus">-</button>
+                        <input type="number" id="spin-bet-amount" value="10" min="1">
+                        <button id="spin-btn-plus">+</button>
+                    </div>
+                    <button class="play-btn" id="btn-bet" disabled>LOADING...</button>
+                </div>
+                
+                <div class="quick-bets" id="spin-quick-bets">
+                    <button class="quick-bet-btn" data-value="10">10</button>
+                    <button class="quick-bet-btn" data-value="20">20</button>
+                    <button class="quick-bet-btn" data-value="50">50</button>
+                    <button class="quick-bet-btn" data-value="100">100</button>
+                    <button class="quick-bet-btn" data-value="500">500</button>
+                    <button class="quick-bet-btn" data-value="1000">1k</button>
+                    <button class="quick-bet-btn" data-value="5000">5K</button>
+                    <button class="quick-bet-btn" data-value="10000">10k</button>
+                </div>
+
+            </div>
+        </div>
+        
+        <div class="win-popup-overlay" id="win-popup">
+            <div class="win-popup-content">
+                <h2 class="popup-title">YOU WIN!</h2>
+                <div class="popup-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <div class="popup-winnings"><i class="fas fa-coins"></i><span id="winnings-amount">+ 0</span></div>
+                <button class="popup-collect-btn" id="collect-btn">COLLECT</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+            authDomain: "spin-199a1.firebaseapp.com",
+            databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "spin-199a1",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let loggedInUserKey = null;
+        let walletBalance = 0;
+        let isWalletDataLoaded = false;
+        let isSpinsDataLoaded = false;
+        const MAX_HISTORY = 10;
+
+        let spinCount = parseInt(sessionStorage.getItem('spinCount')) || 0;
+        let losingSpinsLeft = parseInt(sessionStorage.getItem('losingSpinsLeft')) || 0;
+
+        const balanceEl = document.getElementById('balance-amount');
+        const profileMainImgEl = document.getElementById('profile-main-img');
+        const notificationBadge = document.getElementById('notification-count-badge');
+
+        const winPopup = document.getElementById('win-popup');
+        const winningsAmountEl = document.getElementById('winnings-amount');
+        const collectBtn = document.getElementById('collect-btn');
+        const wheel = document.getElementById('wheel');
+        const btnBet = document.getElementById('btn-bet');
+        const spinBetAmountInput = document.getElementById('spin-bet-amount');
+        const spinHistoryContainer = document.getElementById('spin-history-circles');
+        let spinHistory = [], spinSegments = [], isSpinning = false, currentRotation = 0;
+
+        window.onload = function() { 
+            checkLoginStatus(); 
+        }
+
+        function checkLoginStatus() {
+            loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+            if (loggedInUserKey) {
+                loadUserData(loggedInUserKey);
+            } else { 
+                window.location.href = 'login.html'; 
+            }
+        }
+        
+        function loadUserData(userKey) {
+            const userRef = database.ref('customers/' + userKey);
+            userRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    
+                    if (userData.Issue && userData.Issue.Status === 'on') {
+                        window.location.href = 'technical issue.html';
+                        return;
+                    }
+
+                    const currentBalance = parseFloat(userData.balance) || 0;
+                    updateBalanceUI(currentBalance);
+                    walletBalance = currentBalance;
+                    profileMainImgEl.src = `https://i.pravatar.cc/40?u=${userKey}`;
+                    isWalletDataLoaded = true;
+                    checkAndEnableButton();
+                    setupFirebaseListeners();
+                    initializeSpinGame();
+                }
+            });
+        }
+        
+        function updateBalanceUI(balance) { 
+            balanceEl.textContent = balance.toFixed(2); 
+        }
+        
+        function setupFirebaseListeners() {
+            database.ref('global_notifications').on('value', (snapshot) => {
+                const count = snapshot.exists() ? snapshot.numChildren() : 0;
+                if (count > 0) {
+                    notificationBadge.textContent = count > 9 ? '9+' : count;
+                    notificationBadge.classList.add('show');
+                } else { 
+                    notificationBadge.classList.remove('show'); 
+                }
+            });
+        }
+
+        function checkAndEnableButton() {
+            if (isWalletDataLoaded && isSpinsDataLoaded) {
+                btnBet.disabled = false;
+                btnBet.textContent = 'BET';
+            }
+        }
+
+        function showWinPopup(amount) {
+            winningsAmountEl.textContent = `+ ${amount.toFixed(2)}`;
+            winPopup.classList.add('show');
+        }
+        collectBtn.addEventListener('click', () => {
+            winPopup.classList.remove('show');
+        });
+        
+        function initializeSpinGame() {
+            database.ref('/spins').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    spinSegments = Object.values(snapshot.val());
+                    generateWheel(spinSegments);
+                    isSpinsDataLoaded = true;
+                    checkAndEnableButton();
+                } else { 
+                    btnBet.textContent = 'SETUP DB!';
+                    console.error("Firebase Error: '/spins' data not found.");
+                }
+            });
+            renderSpinHistory();
+        }
+
+        function generateWheel(segmentsData) {
+            if (!wheel) return;
+            const numbersContainer = wheel.querySelector('.wheel-numbers');
+            numbersContainer.innerHTML = '';
+            const numSegments = segmentsData.length;
+            const segmentAngleDeg = 360 / numSegments;
+            let gradientString = 'conic-gradient(';
+            const radius = wheel.offsetWidth / 2;
+            const textOffset = radius * 0.7;
+
+            segmentsData.forEach((seg, index) => {
+                const startDeg = index * segmentAngleDeg;
+                const endDeg = (index + 1) * segmentAngleDeg;
+                gradientString += `${seg.color} ${startDeg}deg ${endDeg}deg, `;
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'wheel-number';
+                numberDiv.textContent = `x${seg.coin}`;
+                const angleRad = ((startDeg + segmentAngleDeg / 2) * Math.PI) / 180;
+                const numberX = Math.sin(angleRad) * textOffset;
+                const numberY = -Math.cos(angleRad) * textOffset;
+                numberDiv.style.transform = `translate(${numberX}px, ${numberY}px) translate(-50%, -50%)`;
+                numbersContainer.appendChild(numberDiv);
+            });
+            wheel.style.background = gradientString.slice(0, -2);
+        }
+
+        function renderSpinHistory() {
+            spinHistoryContainer.innerHTML = '';
+            for(let i=0; i < MAX_HISTORY; i++) {
+                const circle = document.createElement('div');
+                circle.className = 'history-circle';
+                if(spinHistory[i]) circle.style.backgroundColor = spinHistory[i];
+                spinHistoryContainer.appendChild(circle);
+            }
+        }
+
+        btnBet.addEventListener('click', () => {
+            if (isSpinning || spinSegments.length === 0 || !loggedInUserKey) return;
+            const betValue = parseInt(spinBetAmountInput.value);
+            if (!betValue || betValue <= 0) { alert("Invalid bet amount."); return; }
+            if (betValue > walletBalance) { alert("Insufficient balance."); return; }
+
+            isSpinning = true;
+            btnBet.disabled = true;
+            btnBet.textContent = 'SPINNING';
+
+            spinCount++;
+            sessionStorage.setItem('spinCount', spinCount);
+
+            let targetSegment;
+            let winningCoinValue = 0;
+
+            const findLosingSegment = () => {
+                const losingSegments = spinSegments.filter(s => s.coin == 0);
+                return losingSegments.length > 0 ? losingSegments[Math.floor(Math.random() * losingSegments.length)] : spinSegments[Math.floor(Math.random() * spinSegments.length)];
+            };
+
+            if (spinCount <= 3) {
+                targetSegment = findLosingSegment();
+            } else if (losingSpinsLeft > 0) {
+                targetSegment = findLosingSegment();
+                losingSpinsLeft--;
+                sessionStorage.setItem('losingSpinsLeft', losingSpinsLeft);
+            } else {
+                const winningSegments = spinSegments.filter(s => s.coin > 0 && s.coin <= 9);
+                if (winningSegments.length > 0) {
+                    targetSegment = winningSegments[Math.floor(Math.random() * winningSegments.length)];
+                    winningCoinValue = targetSegment.coin;
+                    losingSpinsLeft = winningCoinValue + 1;
+                    sessionStorage.setItem('losingSpinsLeft', losingSpinsLeft);
+                } else {
+                    targetSegment = findLosingSegment();
+                }
+            }
+
+            if (!targetSegment) {
+                alert("Wheel configuration error.");
+                isSpinning = false;
+                btnBet.disabled = false;
+                btnBet.textContent = 'BET';
+                return;
+            }
+            
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            database.ref('spin_result').set({
+                coin: winningCoinValue,
+                color: randomColor
+            });
+
+            const targetSegmentIndex = spinSegments.findIndex(s => s === targetSegment);
+            const segmentAngle = 360 / spinSegments.length;
+            const randomOffsetInSegment = (Math.random() - 0.5) * (segmentAngle * 0.8);
+            const targetAngle = 360 - (targetSegmentIndex * segmentAngle) - (segmentAngle / 2) + randomOffsetInSegment;
+            const fullSpins = 5 * 360;
+            const newRotation = (currentRotation - (currentRotation % 360)) + fullSpins + targetAngle;
+            currentRotation = newRotation;
+
+            let newBalance = walletBalance - betValue;
+            const currentUserBalanceRef = database.ref(`customers/${loggedInUserKey}/balance`);
+            currentUserBalanceRef.set(newBalance);
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                const winnings = betValue * winningCoinValue;
+
+                if (winnings > 0) {
+                    currentUserBalanceRef.set(newBalance + winnings);
+                    showWinPopup(winnings);
+                }
+
+                isSpinning = false;
+                btnBet.disabled = false;
+                btnBet.textContent = 'BET';
+                spinHistory.unshift(targetSegment.color);
+                if (spinHistory.length > MAX_HISTORY) spinHistory.pop();
+                renderSpinHistory();
+            }, 5000);
+        });
+
+        document.getElementById('spin-btn-plus').addEventListener('click', () => spinBetAmountInput.value = parseInt(spinBetAmountInput.value) + 10);
+        document.getElementById('spin-btn-minus').addEventListener('click', () => spinBetAmountInput.value = Math.max(1, parseInt(spinBetAmountInput.value) - 10));
+        document.querySelectorAll('#spin-quick-bets .quick-bet-btn').forEach(btn => btn.addEventListener('click', () => spinBetAmountInput.value = btn.dataset.value));
+
+    </script>
+</body>
+</html>

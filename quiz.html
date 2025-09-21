@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Number Quiz — Full (Family Friendly)</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#7b0a0a; --bg2:#5a0a0a; --accent:#ffb86b; --green:#3ee07a; --white:#fff;
+      --card: rgba(255,255,255,0.06);
+      --soft-shadow: 0 12px 40px rgba(0,0,0,0.36);
+      --glass: rgba(255,255,255,0.06);
+    }
+    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
+    html,body{height:100%;margin:0}
+    body{background:linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 100%);color:var(--white);display:flex;flex-direction:column;align-items:stretch}
+    .app{flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* Top header */
+    .top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+    .left-row{display:flex;align-items:center;gap:12px}
+    .back{font-size:28px;cursor:pointer;padding:6px}
+    .wallet-pill{background:linear-gradient(90deg,#c96b2b,#8b2a2a);padding:8px 20px;border-radius:28px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px}
+    .wallet-pill .plus{font-weight:900}
+    .profile{display:flex;align-items:center;gap:10px}
+    .avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(90deg,#ffdca8,#ff9f9f);display:flex;align-items:center;justify-content:center;color:#2b1a0a;font-weight:800}
+    .user-info{font-size:13px;text-align:right}
+
+/* Counter */
+    .counter-wrap{text-align:center;padding:6px 0}
+    .counter{font-size:44px;font-weight:900;margin-top:6px}
+
+/* Play area */
+    .play-area{padding:12px 16px;flex:0 0 auto}
+    .row{display:flex;align-items:center;gap:14px}
+    .circles{display:flex;gap:12px;align-items:center}
+    .circle{width:66px;height:66px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+    .square-input{margin-left:auto;width:140px;height:56px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center}
+    .square-input input{width:90%;height:70%;background:transparent;border:none;color:var(--white);font-weight:800;font-size:16px;text-align:center;outline:none}
+
+/* Large message area */
+    .large-box{margin-top:14px;height:86px;border-radius:12px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;color:rgba(255,255,255,0.9);font-weight:700}
+
+/* Controls row: amount, toggle, manual play */
+    .controls{display:flex;align-items:center;gap:12px;margin-top:10px}
+    .amount-control{display:flex;align-items:center;gap:8px;padding:6px;border-radius:12px;background:rgba(255,255,255,0.04)}
+    .amount-control button{border:none;background:transparent;color:var(--white);font-size:22px;width:38px;height:38px;border-radius:8px;cursor:pointer}
+    .amount-display{min-width:68px;text-align:center;font-weight:900}
+    .toggle{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.85)}
+    .play-btn{margin-left:auto;background:linear-gradient(90deg,var(--accent),#ff8f6b);color:#2b1a0a;border:none;padding:10px 16px;border-radius:12px;cursor:pointer;font-weight:900;box-shadow:0 12px 34px rgba(0,0,0,0.36)}
+
+/* Feed (bottom sheet) */
+    .feed{margin-top:14px;flex:1 1 auto;background:linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.14));border-top-left-radius:36px;border-top-right-radius:36px;padding:18px 16px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+    .feed-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.03);backdrop-filter: blur(4px)}
+    .feed-item .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(90deg,#ffdca8,#ff9f9f);display:flex;align-items:center;justify-content:center;color:#2b1a0a;font-weight:800}
+    .feed-item .meta{flex:1;display:flex;justify-content:space-between;gap:16px;align-items:center}
+    .feed-item .small{font-size:13px;color:rgba(255,255,255,0.8)}
+
+/* Dialog */
+    .dialog{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#fff,#ffe8d6);color:#2b1a0a;padding:18px;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,0.4);display:none;z-index:60;text-align:center}
+
+/* Profile panel small */
+    .profile-panel{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,0.03)}
+
+/* small screens */
+    @media(max-width:420px){
+      .circle{width:56px;height:56px;font-size:20px}
+      .square-input{width:110px;height:48px}
+      .wallet-pill{padding:6px 14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- Top bar -->
+    <div class="top">
+      <div class="left-row">
+        <div class="back" id="back">‹</div>
+        <div class="wallet-pill" title="Wallet">
+          <div style="font-size:13px;opacity:0.95">৳ <span id="wallet-balance">0</span></div>
+          <div class="plus" style="opacity:0.95">＋</div>
+        </div>
+      </div>
+
+      <div class="profile">
+        <div class="user-info">
+          <div style="font-weight:800" id="user-name">Guest</div>
+          <div style="font-size:12px;opacity:0.9" id="user-role">Family Player</div>
+        </div>
+        <div class="avatar" id="avatar">G</div>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="counter-wrap">
+      <div style="font-size:14px;font-weight:700;opacity:0.95">Countdown</div>
+      <div class="counter" id="countdown">10</div>
+    </div>
+
+    <!-- Play area -->
+    <div class="play-area cardless">
+      <div class="row">
+        <div class="circles" aria-hidden="true">
+          <div class="circle" id="box1">-</div>
+          <div class="circle" id="box2">-</div>
+          <div class="circle" id="box3">-</div>
+        </div>
+
+        <div class="square-input">
+          <input id="user-input" placeholder="e.g. 1 2 3 or 123" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="large-box" id="message-area">নিচে নাম্বার লিখুন, অটো কাউন্ট ডাউন শেষে রান হবে</div>
+
+      <div class="controls">
+        <div class="amount-control" title="Bet amount">
+          <button id="minus">−</button>
+          <div class="amount-display">৳ <span id="amount">10</span></div>
+          <button id="plus">＋</button>
+        </div>
+
+        <label class="toggle"><input type="checkbox" id="order-toggle" checked /> Order-insensitive</label>
+
+        <button class="play-btn" id="manual-play">Play Now</button>
+      </div>
+    </div>
+
+    <!-- Feed (bottom) -->
+    <div class="feed" id="feed">
+      <!-- feed-items added here -->
+    </div>
+  </div>
+
+  <!-- Dialog -->
+  <div class="dialog" id="win-dialog">
+    <div style="font-size:22px;font-weight:900" id="dialog-title">You Win!</div>
+    <div style="margin-top:8px;font-weight:800" id="dialog-amount">৳0</div>
+  </div>
+
+  <!-- Auth & Firebase scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+  <script>
+/* ===========================
+   Firebase init (user-provided)
+   =========================== */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+      authDomain: "spin-199a1.firebaseapp.com",
+      databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "spin-199a1",
+      storageBucket: "spin-199a1.appspot.com",
+      messagingSenderId: "201888892362",
+      appId: "1:201888892362:android:ba9ef620319f85b56ebb33"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+/* ===========================
+   Elements & state
+   =========================== */
+    const countdownEl = document.getElementById('countdown');
+    const boxEls = [document.getElementById('box1'), document.getElementById('box2'), document.getElementById('box3')];
+    const userInput = document.getElementById('user-input');
+    const feed = document.getElementById('feed');
+    const walletEl = document.getElementById('wallet-balance');
+    const amountSpan = document.getElementById('amount');
+    const minusBtn = document.getElementById('minus'), plusBtn = document.getElementById('plus');
+    const manualPlay = document.getElementById('manual-play');
+    const orderToggle = document.getElementById('order-toggle');
+    const messageArea = document.getElementById('message-area');
+    const dialog = document.getElementById('win-dialog');
+    const dialogAmount = document.getElementById('dialog-amount');
+    const userNameEl = document.getElementById('user-name');
+    const avatarEl = document.getElementById('avatar');
+
+    let count = 10, timer = null, running = false;
+    let amount = 10; // default (user requested)
+    let wallet = 0;
+    const MIN_AMOUNT = 10;
+
+/* ===========================
+   Utility helpers
+   =========================== */
+    function rand(){ return Math.floor(Math.random()*9)+1; }
+
+    function clampAmount(v){ return Math.max(MIN_AMOUNT, Math.round(v/10)*10); }
+
+    function parseInput(text){
+      if(!text) return [];
+      text = text.trim();
+      // split by non-digit
+      let parts = text.split(/\D+/).filter(s=>s.length>0).map(s=>parseInt(s,10));
+      if(parts.length === 0){
+        // maybe "123"
+        parts = text.split('').filter(c=>/\d/.test(c)).map(d=>parseInt(d,10));
+      }
+      return parts.slice(0,3);
+    }
+
+    function arrCounts(arr){
+      const m = {};
+      arr.forEach(x => { m[x] = (m[x]||0)+1; });
+      return m;
+    }
+
+    function orderInsensitiveMatch(userArr, resArr){
+      // both arrays length 3 (or up to 3). We check multiset equality for provided positions only.
+      const u = userArr.slice().filter(x=>x!=null);
+      if(u.length === 0) return false;
+      const uc = arrCounts(u), rc = arrCounts(resArr);
+      for(const k in uc){ if(!rc[k] || rc[k] < uc[k]) return false; }
+      return true;
+    }
+
+    function positionWiseMatch(userArr, resArr){
+      // userArr contains provided numbers at certain positions — require equality at those positions
+      for(let i=0;i<userArr.length;i++){
+        if(userArr[i] == null) continue;
+        if(userArr[i] !== resArr[i]) return false;
+      }
+      return true;
+    }
+
+/* ===========================
+   Wallet (load & update)
+   =========================== */
+    db.ref('wallet/balance').once('value').then(snap=>{
+      const v = snap.val();
+      if(v != null){ wallet = Number(v); walletEl.textContent = wallet; }
+    }).catch(()=>{});
+
+    function updateWallet(newBal){
+      wallet = newBal;
+      walletEl.textContent = wallet;
+      db.ref('wallet').set({ balance: wallet }).catch(()=>{});
+    }
+
+/* ===========================
+   Feed UI
+   =========================== */
+    function addFeedItem(user, inputArr, resultArr, betAmount, win){
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      const avatar = document.createElement('div'); avatar.className='avatar';
+      avatar.textContent = (user && user[0]) ? user[0].toUpperCase() : 'U';
+      const meta = document.createElement('div'); meta.className='meta';
+      const left = document.createElement('div'); left.style.fontWeight='800';
+      left.textContent = `${resultArr.join(' ')}`;
+      const right = document.createElement('div'); right.style.textAlign='right';
+      const small = document.createElement('div'); small.className='small';
+      small.textContent = `Bet: ৳${betAmount} • In: ${inputArr.length||0}`;
+      const winEl = document.createElement('div');
+      winEl.style.fontWeight='900';
+      winEl.style.color = win>0 ? 'var(--green)' : 'rgba(255,255,255,0.85)';
+      winEl.textContent = win>0 ? `৳${win}` : '';
+      right.appendChild(small); right.appendChild(winEl);
+      meta.appendChild(left); meta.appendChild(right);
+      item.appendChild(avatar); item.appendChild(meta);
+      feed.prepend(item);
+      // animate scroll-up like effect: newest on top already
+      while(feed.children.length > 60) feed.removeChild(feed.lastChild);
+    }
+
+/* ===========================
+   Dialog (win) UI
+   =========================== */
+    function showDialog(win){
+      if(win <= 0) return;
+      dialogAmount.textContent = '৳' + win;
+      dialog.style.display = 'block';
+      setTimeout(()=> dialog.style.display = 'none', 2000);
+    }
+
+/* ===========================
+   Game core: run a round
+   =========================== */
+    async function runRound(triggeredByManual=false){
+      if(running) return;
+      running = true;
+      // generate three random numbers simultaneously
+      const res = [rand(), rand(), rand()];
+      // show dots briefly then numbers
+      boxEls.forEach(b => { b.textContent = '...'; b.style.background = 'rgba(255,255,255,0.06)'; });
+      await new Promise(r=>setTimeout(r,450));
+      boxEls.forEach((b,i) => { b.textContent = res[i]; b.style.background = 'rgba(255,255,255,0.12)'; });
+
+      // parse user input into up to 3 numbers — allow position mapping: if user typed 1 2 or 12 etc.
+      const userArrRaw = parseInput(userInput.value); // e.g. [1,2] or [1,2,3]
+      // map to 3-slot array with nulls according to input length and how user entered:
+      // If user entered exact 3 => treat as positions 0,1,2.
+      // If 2 => interpret as last-two by default (we'll implement both approaches).
+      let userArr = [null, null, null];
+      if(userArrRaw.length === 3){
+        userArr = [userArrRaw[0], userArrRaw[1], userArrRaw[2]];
+      } else if(userArrRaw.length === 2){
+        // assume user gave two numbers intended for middle+last (positions 1,2)
+        // but also support if user used separators and intended positions 0 & 1 — it's ambiguous.
+        // We choose the behavior: map to last-two by default.
+        userArr = [null, userArrRaw[0], userArrRaw[1]];
+      } else if(userArrRaw.length === 1){
+        // single value -> we'll check against last position for position-wise, or set as single for order-insensitive
+        userArr = [null, null, userArrRaw[0]];
+      }
+
+      // Determine win based on selected mode
+      const betAmount = amount; // current amount
+      let win = 0;
+
+      if(orderToggle.checked){
+        // ORDER-INSENSITIVE MODE (multiset): if user provided 3 numbers, compare multisets;
+        // if provided 2 numbers, check that res contains those two (in any positions) with sufficient counts;
+        // if 1 number, check res contains that number.
+        const provided = userArrRaw.length;
+        if(provided === 3){
+          if(orderInsensitiveMatch(userArrRaw, res)) win = 30 * betAmount;
+        }else if(provided === 2){
+          if(orderInsensitiveMatch(userArrRaw, res)) win = 20 * betAmount;
+        }else if(provided === 1){
+          if(orderInsensitiveMatch(userArrRaw, res)) win = 10 * betAmount;
+        }
+      } else {
+        // POSITION-WISE MODE
+        const providedCount = userArrRaw.length;
+        if(providedCount === 3){
+          if(positionWiseMatch(userArr, res)) win = 30 * betAmount;
+        } else if(providedCount === 2){
+          // last two positions (index 1 & 2)
+          if(userArr[1] !== null && userArr[2] !== null && userArr[1] === res[1] && userArr[2] === res[2]) win = 20 * betAmount;
+        } else if(providedCount === 1){
+          if(userArr[2] !== null && userArr[2] === res[2]) win = 10 * betAmount;
+        }
+      }
+
+      // record to firebase bets
+      const rec = {
+        user: (auth.currentUser && auth.currentUser.displayName) ? auth.currentUser.displayName : 'Guest',
+        uid: (auth.currentUser && auth.currentUser.uid) ? auth.currentUser.uid : 'anon',
+        input: userArrRaw,
+        mappedInput: userArr,
+        result: res,
+        amount: betAmount,
+        win: win,
+        ts: Date.now()
+      };
+      db.ref('bets').push(rec).catch(()=>{});
+
+      // update wallet if win
+      if(win > 0){
+        updateWallet(wallet + win);
+        showDialog(win);
+      }
+
+      // add to UI feed
+      addFeedItem(rec.user, userArrRaw, res, betAmount, win);
+
+      // wait 3s, then reset and restart countdown
+      await new Promise(r=>setTimeout(r,3000));
+      boxEls.forEach(b => { b.textContent = '-'; b.style.background = 'rgba(255,255,255,0.12)'; });
+      running = false;
+      startCountdown(); // restart countdown automatically
+    }
+
+/* ===========================
+   Countdown logic
+   =========================== */
+    function startCountdown(){
+      if(timer) return;
+      count = 10; countdownEl.textContent = count;
+      timer = setInterval(()=>{
+        count--; countdownEl.textContent = count;
+        if(count <= 0){
+          clearInterval(timer); timer = null;
+          // auto-run round
+          runRound();
+        }
+      }, 1000);
+    }
+
+    function stopCountdown(){
+      if(timer){ clearInterval(timer); timer = null; }
+    }
+
+/* ===========================
+   Bind UI: amount +/-
+   =========================== */
+    function refreshAmount(){
+      amount = clampAmount(amount);
+      amountSpan.textContent = amount;
+    }
+    plusBtn.addEventListener('click', ()=>{ amount += 10; refreshAmount(); });
+    minusBtn.addEventListener('click', ()=>{ if(amount > MIN_AMOUNT) amount -= 10; refreshAmount(); });
+
+/* ===========================
+   Manual play button and Enter key
+   =========================== */
+    manualPlay.addEventListener('click', ()=>{
+      // manual trigger: stop countdown and run
+      stopCountdown();
+      runRound(true);
+    });
+    userInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        stopCountdown();
+        runRound(true);
+      }
+    });
+
+/* ===========================
+   Load remote bets into feed in realtime (others)
+   =========================== */
+    db.ref('bets').limitToLast(30).on('child_added', snap=>{
+      const r = snap.val();
+      if(!r) return;
+      // Avoid duplicate: since we push locally too, we still want to show — feed newest on top
+      addFeedItem(r.user || 'User', (r.input || []), (r.result || []), r.amount || 0, r.win || 0);
+    });
+
+/* ===========================
+   USER AUTH & PROFILE IMAGE upload
+   =========================== */
+
+    // Simple email/password sign-in flow UI (modal-free small quick-flow)
+    // NOTE: for production you'd implement nicer UX; here is a minimal approach:
+    (function authUI(){
+      // if user not signed in, prompt for email via simple prompt (quick for demo)
+      auth.onAuthStateChanged(user => {
+        if(user){
+          // signed in
+          userNameEl.textContent = user.displayName || (user.email || 'User').split('@')[0];
+          avatarEl.textContent = (user.displayName && user.displayName[0]) ? user.displayName[0].toUpperCase() : (user.email?user.email[0].toUpperCase():'G');
+          // load profile image from db / storage if exists
+          db.ref('users/'+user.uid+'/profilePic').once('value').then(s => {
+            const url = s.val();
+            if(url){
+              // show thumbnail
+              avatarEl.style.backgroundImage = `url(${url})`;
+              avatarEl.style.backgroundSize = 'cover';
+              avatarEl.textContent = '';
+            }
+          }).catch(()=>{});
+        } else {
+          // no user: try to sign in anonymously or create quick email account
+          // For safety we try anonymous sign-in so user can play immediately; but we also allow 'upgrade' later.
+          auth.signInAnonymously().catch(()=>{ /* ignore */ });
+        }
+      });
+
+      // provide quick profile image upload when avatar clicked:
+      avatarEl.style.cursor = 'pointer';
+      avatarEl.addEventListener('click', ()=>{
+        const user = auth.currentUser;
+        if(!user || user.isAnonymous){
+          // prompt to create email account (simple flow)
+          const email = prompt('Enter email to create account (optional, leave blank to stay anonymous):');
+          if(email){
+            const pw = prompt('Set a password (min 6 chars):');
+            if(!pw || pw.length < 6){ alert('Password too short'); return; }
+            auth.createUserWithEmailAndPassword(email, pw).then(cred=>{
+              const u = cred.user;
+              const name = prompt('Display name (optional):');
+              if(name) u.updateProfile({ displayName: name });
+              alert('Account created. Click avatar again to upload profile image.');
+            }).catch(err=>{ alert('Sign up failed: '+err.message); });
+          } else {
+            alert('You are playing anonymously — to save profile/upload image create an account.');
+          }
+          return;
+        }
+        // create file input
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
+        inp.onchange = async (ev) => {
+          const file = ev.target.files[0];
+          if(!file) return;
+          const storageRef = storage.ref().child('profilePics/'+user.uid+'/'+Date.now()+'_'+file.name);
+          const task = storageRef.put(file);
+          task.on('state_changed', null, err=>alert('Upload error: '+err.message), async ()=>{
+            const url = await storageRef.getDownloadURL();
+            // store url in db
+            db.ref('users/'+user.uid).update({ profilePic: url, displayName: user.displayName || '' });
+            // update UI
+            avatarEl.style.backgroundImage = `url(${url})`; avatarEl.style.backgroundSize='cover'; avatarEl.textContent = '';
+            alert('Profile image uploaded!');
+          });
+        };
+        inp.click();
+      });
+    })();
+
+/* ===========================
+   Initialize UI & start
+   =========================== */
+    (function init(){
+      refreshAmount();
+      // reset boxes to '-' look
+      boxEls.forEach(b => { b.textContent = '-'; b.style.background = 'rgba(255,255,255,0.12)'; });
+      // start countdown
+      startCountdown();
+      // small welcome message
+      messageArea.textContent = 'Type your numbers (1-9). Auto-start after countdown or press Play Now.';
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>VIP Dialog — Realtime</title>
+
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css"/>
+
+  <style>
+    /* --- New Color Scheme based on the provided image --- */
+    :root{
+      --dark1: #3d0000; /* Deep Maroon Top */
+      --dark2: #6e0000; /* Lighter Maroon Bottom */
+      --card: #5a0000;  /* Panel Background */
+      --gold1: #ffc107; /* Primary Accent - Yellow/Gold */
+      --gold2: #ff9f1a; /* Secondary Accent for Gradients */
+      --muted: #f0e6e6; /* Off-white text for readability */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding: 0;
+      font-family: 'Noto Sans Bengali', 'Poppins', system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--dark1) 0%, var(--dark2) 100%);
+      color: var(--muted); /* Changed default text color */
+      overflow-y: auto;
+    }
+
+    .page-container {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    .vip-dialog{
+      width:100%;
+      border-radius:0;
+      background: linear-gradient(180deg, rgba(40,0,0,0.95), rgba(60,0,0,0.95));
+      border: none;
+      box-shadow: none;
+      overflow:hidden;
+      padding-bottom: 20px;
+    }
+    
+    .page-header {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: rgba(0,0,0,0.2);
+    }
+    .back-btn {
+        font-size: 24px;
+        color: white;
+        text-decoration: none;
+        margin-right: 15px;
+    }
+
+    .vip-top{
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      background:linear-gradient(90deg, rgba(255,193,7,0.06), rgba(255,193,7,0.02));
+    }
+    .vip-title{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .vip-logo{
+      font-size:36px;
+      font-weight:900;
+      color:var(--gold1);
+      text-shadow: 0 2px 8px rgba(255,193,7,0.18);
+      letter-spacing:2px;
+    }
+    .vip-level-chip{
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      padding:6px 10px;
+      border-radius:10px;
+      font-weight:700;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.04);
+    }
+
+    .vip-current{
+      padding:12px 18px;
+      text-align:center;
+    }
+    .current-label{ font-size:13px; color:var(--muted); margin-bottom:6px; }
+    .current-amount{
+      font-size:28px;
+      font-weight:800;
+      color:var(--gold1);
+      text-shadow:0 2px 8px rgba(0,0,0,0.6);
+      margin-bottom:8px;
+    }
+    .progress-bar{
+      width:86%;
+      height:12px;
+      margin:0 auto;
+      background: rgba(0,0,0,0.25);
+      border-radius:20px;
+      overflow:hidden;
+      border:1px solid rgba(255,193,7,0.03);
+    }
+    .progress-fill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--gold1), var(--gold2));
+      transition:width 400ms ease;
+    }
+
+    .priv-box{
+      margin:12px 16px;
+      background: linear-gradient(180deg, rgba(90,0,0,0.08), rgba(76,0,0,0.04));
+      border: 1px solid rgba(255,193,7,0.1);
+      border-radius:12px;
+      padding:12px;
+    }
+    .priv-box h3{
+      margin:0 0 8px 0;
+      color:var(--gold1);
+      font-size:16px;
+      text-align:center;
+    }
+    .priv-list{ font-size:13px; color:var(--muted); line-height:1.6; margin:0; padding:0 6px; }
+
+    .slider-wrap{
+      padding:12px 0 18px 0;
+      position:relative;
+    }
+    .swiper{
+      width:80%;
+      margin: 0 auto;
+      padding:12px 0;
+    }
+    .swiper-slide{
+      display:flex;
+      justify-content:center;
+    }
+    .card{
+      width:100%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.12));
+      border-radius:14px;
+      padding:12px;
+      text-align:center;
+      border:1px solid rgba(255,193,7,0.1);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+      transition: transform .28s ease;
+    }
+    .card.active{ transform: translateY(-6px) scale(1.02); box-shadow: 0 14px 30px rgba(0,0,0,0.6); }
+    .card .label-level{ font-weight:800; color:var(--gold1); font-size:20px; margin-bottom:8px; }
+    .card .plan-name{ font-weight:700; color:#fff; margin-bottom:8px; }
+    .card .meta-row{ display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--muted); margin:6px 0; }
+    .card .meta-row b{ color:#fff; font-weight:700; }
+
+    .card .deposit-amount{
+      margin-top:10px;
+      font-size:18px;
+      font-weight:800;
+      color:var(--gold2);
+      background: rgba(0,0,0,0.15);
+      padding:8px;
+      border-radius:10px;
+      display:inline-block;
+      min-width:100px;
+    }
+
+    .swiper-button-next, .swiper-button-prev{
+      color:var(--gold1) !important;
+      width:32px; height:32px;
+      border-radius:50%;
+      background: rgba(0,0,0,0.18);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      --swiper-navigation-size: 18px;
+    }
+    .swiper-button-prev { left: 10px; }
+    .swiper-button-next { right: 10px; }
+
+    .bonus-boxes {
+        padding:0 18px;
+        display:flex;
+        gap:10px;
+        justify-content:space-between;
+    }
+    .bonus-box {
+        flex:1;
+        background:linear-gradient(180deg, #5a0000, #4c0000);
+        padding:10px;
+        border-radius:10px;
+        text-align:center;
+        border: 1px solid rgba(255,193,7,0.1);
+    }
+    .bonus-box.levelup { background:linear-gradient(180deg, #7a0000, #5a0000); }
+    .bonus-box .title { color:var(--gold1); font-weight:800; }
+    .bonus-box .value { color:var(--muted); font-weight:700; }
+    .claim-btn {
+        background: var(--gold2);
+        color: #111;
+        border: none;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .claim-btn:disabled {
+        background: #555;
+        color: #999;
+        cursor: not-allowed;
+    }
+
+    .bottom-actions{
+      padding:14px 18px 18px 18px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+    }
+    .upgrade-btn{
+      background: linear-gradient(90deg,var(--gold1),var(--gold2));
+      border:none;
+      color:#111;
+      font-weight:800;
+      padding:12px 18px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(255,165,0,0.15);
+      transition: transform .18s ease;
+    }
+    .upgrade-btn:active{ transform: scale(.98); }
+
+    .no-data{
+      padding:28px;
+      text-align:center;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+      <header class="page-header">
+          <a href="javascript:history.back()" class="back-btn">←</a>
+      </header>
+      <div class="vip-dialog" id="vipDialog" aria-live="polite">
+        <div class="vip-top">
+          <div class="vip-title">
+            <div class="vip-logo">VIP</div>
+            <div class="vip-level-chip" id="topLevel">Level -</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--muted)">Current deposit:</div>
+            <div style="font-weight:800;color:var(--gold1)" id="topDeposit">0.00</div>
+          </div>
+        </div>
+
+        <div class="vip-current">
+          <div class="current-label">You can enjoy VIP privileges with total deposit</div>
+          <div class="current-amount" id="bigDeposit">0.00</div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <div class="priv-box">
+          <h3>VIP Privileges</h3>
+          <ul class="priv-list" id="privList"></ul>
+        </div>
+
+        <div class="slider-wrap">
+          <div class="swiper mySwiper">
+            <div class="swiper-wrapper" id="plansWrap"></div>
+          </div>
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+        </div>
+
+        <div class="bonus-boxes">
+            <div class="bonus-box">
+              <div class="title">Weekly Bonus</div>
+              <div class="value" id="weeklyVal">-</div>
+              <button class="claim-btn" data-type="Bonus">Claim</button>
+            </div>
+            <div class="bonus-box">
+              <div class="title">Monthly Bonus</div>
+              <div class="value" id="monthlyVal">-</div>
+              <button class="claim-btn" data-type="Limit">Claim</button>
+            </div>
+            <div class="bonus-box levelup">
+              <div class="title">Level Up</div>
+              <div class="value" id="levelupVal">-</div>
+            </div>
+        </div>
+
+        <div class="bottom-actions">
+          <button class="upgrade-btn" id="upgradeBtn">Upgrade Now</button>
+        </div>
+      </div>
+
+      <div class="vip-dialog no-data" id="noData" style="display:none">
+        No VIP Data Found
+      </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+    document.addEventListener('touchmove', function(e){
+      if(e.touches && e.touches.length > 1) e.preventDefault();
+    }, {passive:false});
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAc78M_nj7kJtnRCTqdEdWsiMQeq4oSuDc",
+      authDomain: "spin-199a1.firebaseapp.com",
+      databaseURL: "https://spin-199a1-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "spin-199a1",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const vipDialog = document.getElementById('vipDialog');
+    const noData = document.getElementById('noData');
+    const topLevel = document.getElementById('topLevel');
+    const topDeposit = document.getElementById('topDeposit');
+    const bigDeposit = document.getElementById('bigDeposit');
+    const progressFill = document.getElementById('progressFill');
+    const plansWrap = document.getElementById('plansWrap');
+    const weeklyVal = document.getElementById('weeklyVal');
+    const monthlyVal = document.getElementById('monthlyVal');
+    const levelupVal = document.getElementById('levelupVal');
+    const upgradeBtn = document.getElementById('upgradeBtn');
+    const privList = document.getElementById('privList');
+
+    let mySwiper = null;
+    let loggedInUserKey = sessionStorage.getItem("loggedInUserKey");
+
+    function fm(n){
+      return (Number(n) || 0).toFixed(2);
+    }
+
+    function init() {
+        if (!loggedInUserKey) {
+            window.location.href = 'login.html';
+            return;
+        }
+        loadVipAndUserData();
+        document.querySelectorAll('.claim-btn').forEach(btn => {
+            btn.addEventListener('click', handleClaim);
+        });
+    }
+
+    async function loadVipAndUserData() {
+        const vipPlansSnap = await db.ref('VIPPlans').once('value');
+        const vipPlans = vipPlansSnap.exists() ? Object.values(vipPlansSnap.val()).sort((a, b) => a.level - b.level) : [];
+        
+        db.ref(`customers/${loggedInUserKey}`).on('value', snap => {
+            if (snap.exists()) {
+                const userData = snap.val();
+                const userVipData = userData.VIP || {};
+                renderUI(userData, userVipData, vipPlans);
+            } else {
+                vipDialog.style.display = 'none';
+                noData.style.display = 'block';
+            }
+        });
+    }
+
+    function renderUI(userData, userVipData, allPlans) {
+        const totalDeposit = parseFloat(userVipData.depositAmount || 0);
+        const currentLevel = userVipData.level || 0;
+        
+        topLevel.innerText = `Level ${currentLevel}`;
+        topDeposit.innerText = fm(totalDeposit);
+        bigDeposit.innerText = fm(totalDeposit);
+
+        const currentPlan = allPlans.find(p => p.level === currentLevel) || {};
+        const nextPlan = allPlans.find(p => p.level === currentLevel + 1);
+
+        let progress = 0;
+        if (nextPlan) {
+            const range = nextPlan.depositAmount - (currentPlan.depositAmount || 0);
+            const currentProgress = totalDeposit - (currentPlan.depositAmount || 0);
+            progress = range > 0 ? Math.min(100, (currentProgress / range) * 100) : 100;
+        } else {
+            progress = 100;
+        }
+        progressFill.style.width = `${progress}%`;
+
+        privList.innerHTML = `
+            <li>Weekly Bonus: Login every week to claim.</li>
+            <li>Monthly Bonus: Login every month to claim.</li>
+            <li>Level Up Bonus: Upgrade to next level to claim.</li>
+        `;
+
+        const weeklyBonus = parseFloat(userVipData.Bonus || 0);
+        const monthlyBonus = parseFloat(userVipData.Limit || 0);
+        const levelUpBonus = parseFloat(userVipData.withdrawLimit || 0);
+
+        weeklyVal.innerText = `₹${fm(weeklyBonus)}`;
+        monthlyVal.innerText = `₹${fm(monthlyBonus)}`;
+        levelupVal.innerText = `₹${fm(levelUpBonus)}`;
+
+        document.querySelector('.claim-btn[data-type="Bonus"]').disabled = weeklyBonus <= 0;
+        document.querySelector('.claim-btn[data-type="Limit"]').disabled = monthlyBonus <= 0;
+
+        renderSlides(allPlans, totalDeposit, currentLevel);
+
+        upgradeBtn.onclick = () => {
+            vipDialog.style.transition = 'transform .35s ease, opacity .35s ease';
+            vipDialog.style.transform = 'scale(.92)';
+            vipDialog.style.opacity = '0.6';
+            setTimeout(() => { window.location.href = 'addmoney.html'; }, 350);
+        };
+    }
+
+    function renderSlides(plans, userTotal, activeLevel) {
+      plansWrap.innerHTML = '';
+      plans.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'swiper-slide';
+        const isActive = (activeLevel && p.level === activeLevel);
+        div.innerHTML = `
+          <div class="card ${isActive ? 'active' : ''}">
+            <div class="label-level">VIP ${p.level}</div>
+            <div class="plan-name">${p.planName || ('VIP ' + p.level)}</div>
+            <div class="meta-row"><div><b>Deposit</b></div><div>${fm(p.depositAmount)}</div></div>
+            <div class="meta-row"><div><b>Bonus</b></div><div>${p.Bonus || '-'}</div></div>
+            <div class="meta-row"><div><b>Limit</b></div><div>${p.Limit || '-'}</div></div>
+            <div class="meta-row"><div><b>Withdraw</b></div><div>${p.withdrawLimit || '-'}</div></div>
+            <div style="margin-top:8px">
+              <div class="deposit-amount">${fm(p.depositAmount)}</div>
+            </div>
+            <div style="margin-top:8px;font-size:13px;color:${userTotal >= p.depositAmount ? 'lightgreen' : '#f0b3b3'}">
+              ${userTotal >= p.depositAmount ? 'Unlocked ✅' : 'Locked 🔒'}
+            </div>
+          </div>
+        `;
+        plansWrap.appendChild(div);
+      });
+
+      setTimeout(() => {
+        if (mySwiper) mySwiper.destroy(true, true);
+        mySwiper = new Swiper('.mySwiper', {
+          slidesPerView: 1,
+          spaceBetween: 12,
+          centeredSlides: true,
+          loop: false,
+          navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+        });
+        if (activeLevel) {
+          const index = plans.findIndex(x => x.level === activeLevel);
+          if (index >= 0) mySwiper.slideTo(index, 300, false);
+        }
+      }, 50);
+    }
+
+    async function handleClaim(event) {
+        const btn = event.target;
+        const type = btn.dataset.type;
+        if (!type) return;
+
+        btn.disabled = true;
+        const userRef = db.ref(`customers/${loggedInUserKey}`);
+        
+        try {
+            const userSnap = await userRef.once('value');
+            if (!userSnap.exists()) return;
+
+            const userData = userSnap.val();
+            const userVip = userData.VIP || {};
+            const bonusAmount = parseFloat(userVip[type] || 0);
+
+            if (bonusAmount > 0) {
+                const newBalance = (parseFloat(userData.balance) || 0) + bonusAmount;
+                
+                const updates = {};
+                updates[`balance`] = newBalance;
+                updates[`VIP/${type}`] = 0;
+
+                await userRef.update(updates);
+                alert(`₹${fm(bonusAmount)} has been added to your balance!`);
+            } else {
+                alert("No bonus to claim.");
+            }
+        } catch (error) {
+            console.error("Claim failed:", error);
+            alert("An error occurred. Please try again.");
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
